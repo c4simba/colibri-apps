@@ -1,0 +1,44 @@
+load 10 0 100 0
+busiest [('cpu', 30, 38), ('nectar', 31, 15), ('board', 34, 12)] 0
+history 60 5 64 36
+42 Процессор 64 %, память 42 % | Processor 64%, memory 42%
+1 ч 23 мин | 1 d 1 h 0 min | 108 МБ 16 GB
+2,4 ГГц 999 MHz True
+chart 164719335
+attenuation [0, -1920, -4752, -9450] True
+level [100, 60, 37, 1] 63 0 0
+stack [4, 5, 3]
+card 312 300 400 134 [(14, 14, 120, 86), (140, 14, 120, 86), (266, 14, 120, 86)] A very long title of a text editor window
+steps 2 0 0
+rows 904 226 14 106
+cells [(0, 0), (955, 0), (0, 68)]
+snap (0, 0) (68, 68) (887, -136) (955, -68) (597, -136)
+drop (408, 272, 408, 272) (68, 0, 68, 0) (955, 68, -68, 68) (955, 665, -68, -68)
+moved 408 272 [408, 272]
+b'[rbmenu]\r\n\x8f\xe0\xae\xe6\xa5\xe1\xe1\xeb=cpu\r\n[00]\r\nname=SHELL\r\npath=shell\r\nx=408\r\ny=-136\r\n\r\n[01]\r\nname=KPACK\r\nX = -68\r\n\r\n[02]\nname=BOARD\n'
+b'[rbmenu]\r\n\x8f\xe0\xae\xe6\xa5\xe1\xe1\xeb=cpu\r\n[00]\r\nname=SHELL\r\npath=shell\r\nx=0\r\ny=0\r\n\r\n[01]\r\nname=KPACK\r\nx=-136\r\ny=68\r\n\r\n[02]\nname=BOARD\n'
+b'[rbmenu]\r\n\x8f\xe0\xae\xe6\xa5\xe1\xe1\xeb=cpu\r\n[00]\r\nname=SHELL\r\npath=shell\r\nx=0\r\ny=0\r\n\r\n[01]\r\nname=KPACK\r\nX = -68\r\n\r\n[02]\nname=BOARD\nx=0\ny=136\n'
+True
+picture 5069 True
+place (0, 20) (956, 666) (50, 60)
+corners 0 231 235 0 66382
+compose 1222 2701883
+'; mine\n[launcher]\nstart=Go\n\n[pinned]\nTinypad=tinypad||3\nShell=shell|-x|24\n\n[places]\nX=x||2\n'
+'[launcher]\nstart=Go\n\n[pinned]\nA=a||\n'
+'[pinned]\n'
+[('Board', 'develop/board', '', 13), ('Tiny', 'tinypad', '', -1)] Go
+True False 1 verylongnam
+TinyPad tinypad 3 /SYS/FILE MANAGERS/KFM2
+move 2 ['B', 'C', 'A', 'D'] 0 ['D', 'B', 'C', 'A'] 1 5 ['D', 'B', 'C', 'A']
+drag False True True False False
+languages ['#0', 'English', 'Suomi', 'Deutsch', 'Русский', 'Français', 'Eesti', 'Українська', 'Italiano', 'Беларуская', '#10'] 7 1 1
+layouts 730 498 280 228 Раскладка клавиатуры ['English', 'Русский', 'Українська', 'Параметры клавиатуры'] 1
+keys True 0 True 1 True 0 False True 1 True
+update False 1 False
+drawn 973340405
+click @close 7
+steps (0, 64, 0) (1, 16320, 0) (0, 131, 4718) (0, 0, 0) (0, 255) (970, 125)
+mix 0x7f007f 0xfe00 0x123456 0x10
+gradient ['0xff', '0x7e0080', '0x7f7e7f', '0xfefefd', '0x4ae853', '0xfe00']
+strip ['0x0', '0x3f3f3f', '0x7f7f7f', '0x808080', '0xaeaeae', '0xfefefe']
+fill 54 0xff7d7d7f

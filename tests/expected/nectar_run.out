@@ -1,0 +1,58 @@
+'abПриё 1' 8 'А' 'п' 'Ё' '' ''
+[True, True, True, True, False, True, True, False, False] 'bПри 1' 6
+'bXYПри 1' 3
+'/sys/settings' 13
+scrolled True 44 21 True
+caret at 0 1 0
+field 15588296
+kinds [2, 2, 2, 1, 0, 2, 2, 0]
+absolute /sys/shell /hd0/1
+entries ['@taskbar', 'develop', 'File Managers', 'run', 'settings', 'shell', 'SHELL.INI', 'skincfg'] 4
+read once 4
+'' [('tinypad /hd0/1/notes.txt', 'tinypad /hd0/1/notes.txt', 0, -1), ('shell', 'shell', 0, -1), ('/hd0/1', '/hd0/1', 0, -1)]
+'sh' [('shell', 'shell', 0, -1), ('SHELL.INI', 'SHELL.INI', 2, -1)]
+'s' [('shell', 'shell', 0, -1), ('settings/', 'settings/', 1, -1), ('SHELL.INI', 'SHELL.INI', 2, -1), ('skincfg', 'skincfg', 2, -1)]
+'/sys/Fi' [('/sys/File Managers/', 'File Managers/', 1, -1)]
+'File M' [('File Managers/', 'File Managers/', 1, -1)]
+'/sys/develop' [('/sys/develop/', 'develop/', 1, -1)]
+'/hd0/1/' [('/hd0/1/docs/', 'docs/', 1, -1), ('/hd0/1/notes.txt', 'notes.txt', 2, -1)]
+'/hd0/1/d' [('/hd0/1/docs/', 'docs/', 1, -1)]
+'/' [('/hd0/1', '/hd0/1', 0, -1), ('/hd0/', 'hd0/', 1, -1), ('/rd/', 'rd/', 1, -1), ('/sys/', 'sys/', 1, -1), ('/tmp0/', 'tmp0/', 1, -1)]
+'pro' [('/sys/cpu', 'Processes', 3, 47)]
+'tiny' [('tinypad /hd0/1/notes.txt', 'tinypad /hd0/1/notes.txt', 0, -1), ('/sys/develop/tinypad', 'TinyPad', 3, 12)]
+' x' []
+'zzz' []
+limit 6
+no history [('/sys/shell', 'Shell', 3), ('SHELL.INI', 'SHELL.INI', 2)]
+'shell' -> '/sys/shell' '' 1 ('/sys/shell', '')
+'/sys/shell -c ls' -> '/sys/shell' '-c ls' 1 ('/sys/shell', '-c ls')
+'File Managers/Eolite /hd0/1' -> '/sys/File Managers/Eolite' '/hd0/1' 1 ('/sys/File Managers/Eolite', '/hd0/1')
+'/sys/File Managers/Eolite' -> '/sys/File Managers/Eolite' '' 1 ('/sys/File Managers/Eolite', '')
+'/hd0/1' -> '/hd0/1' '' 2 ('/sys/File Managers/Eolite', '/hd0/1')
+'/hd0/1/docs/' -> '/hd0/1/docs/' '' 2 ('/sys/File Managers/Eolite', '/hd0/1/docs/')
+'eolite /tmp0/1' -> '/sys/File Managers/Eolite' '/tmp0/1' 1 ('/sys/File Managers/Eolite', '/tmp0/1')
+'Eolite' -> '/sys/File Managers/Eolite' '' 1 ('/sys/File Managers/Eolite', '')
+'processes' -> '/sys/cpu' '' 0 ('/sys/cpu', '')
+'cpu' -> '/sys/cpu' '' 0 ('/sys/cpu', '')
+'nothing here' -> 'nothing here' '' 0 ('nothing here', '')
+'   ' -> '' '' 0 ('', '')
+'/sys/settings/nectar.ini' -> '/sys/settings/nectar.ini' '' 1 ('/sys/settings/nectar.ini', '')
+['A', 'b', 'c'] ['c', 'A', 'b'] 20
+Go ['shell', 'tinypad /hd0/1/a=b.txt']
+'[launcher]\nstart=Go\n\n[history]\n1=/hd0/1\n2=shell\n'
+[]
+icons [10, 3, 6, 7, 2, 10]
+panel 8 392 460 334 Выполнить 9 [True, True, True, True, False, False, False, True, True]
+list ['tinypad /hd0/1/notes.txt', 'shell', '/hd0/1']
+typed 'sh' ['shell', 'SHELL.INI'] -1
+down True 0 True 1 True 0 True -1 True 1
+tab 'SHELL.INI' [] -1
+matched ['settings/', 'shell', 'SHELL.INI', 'skincfg'] [1, 1, 1, 1] [0, 10, 3, 10]
+click folder  '/sys/settings/' ['icon.ini', 'menu.dat', 'nectar.ini']
+tab folder '/sys/File Managers/' ['Eolite', 'kfar'] [10, 10]
+enter True 'Не найдено: nothing at all' False @close False
+ctrl False False 'nothing at all'
+notes ['недавнее', 'папка', 'файл', 'программа'] программа
+pointer True 0 False
+painted True 334 288
+empty Run 0 False ['Cancel', 'Run']

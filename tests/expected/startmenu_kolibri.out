@@ -1,0 +1,18 @@
+[gui] redraw begin
+[gui] window x=6 w=405 y=266 h=305 style=0x1000000 caption=''
+[gui] image 406x306 at 0,0 bpp=32 palette=- row_offset=0 first=00070e00
+[gui] redraw end
+[kos] event mask 0x27
+[kos] window z-position 1 for -1
+[gui] redraw begin
+[gui] window x=6 w=405 y=266 h=305 style=0x1000000 caption=''
+[gui] image 406x306 at 0,0 bpp=32 palette=- row_offset=0 first=00070e00
+[gui] redraw end
+[gui] image 233x28 at 163,8 bpp=32 palette=- row_offset=692 first=28221e00
+[gui] image 233x28 at 163,8 bpp=32 palette=- row_offset=692 first=28221e00
+[gui] image 233x28 at 163,36 bpp=32 palette=- row_offset=692 first=28221e00
+[gui] image 233x28 at 163,36 bpp=32 palette=- row_offset=692 first=28221e00
+[gui] move window x=6 y=266 w=577 h=305
+[gui] image 176x40 at 402,32 bpp=32 palette=- row_offset=0 first=8a8f9400
+[gui] image 168x26 at 403,36 bpp=32 palette=- row_offset=32 first=28221e00
+launch: Flat Assembler develop/fasm

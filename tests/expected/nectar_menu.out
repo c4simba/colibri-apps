@@ -1,0 +1,33 @@
+['launcher', 'launcher_ru', 'places', 'places_ru'] ('-', '') ('Search', 'search | | 49')
+start Shut down More [('My Computer', 'File Managers/Eolite', '/', 61, False), ('', '', '', -1, True), ('', '', '', -1, True), ('Run...', 'run', '', 53, False), ('Search', 'search', '', 49, False), ('', '', '', -1, True)]
+start Выкл. Ещё [('Компьютер', 61)]
+Меню Shut down 10
+[('Демонстрации', 0, '', 2), ('Documentation', 18, 'docpack', 0)]
+[('Fractal', 16, 'demos/tinyfrac'), ('zSea', 6, '/kolibrios/media/zsea/zsea')]
+[('KFM2', '/SYS/FILE MANAGERS/KFM2', '', 3, [0, 0]), ('SHELL', 'SHELL', '-x', 1, [-203, 136])] [('Processes', 'cpu'), ('Background', '/sys/media/palitra')]
+main 6 432 400 300 10 (5, 395) (0, 406) (6, 406)
+   0 163 8 233 28 0 True True 'Demos'
+   0 163 36 233 28 0 True True 'Development'
+   0 163 64 233 28 0 False True 'Calculator'
+   2 4 8 150 30 1 False True 'My Computer'
+   7 4 38 150 9 1 False False ''
+   2 4 47 150 30 1 False True 'Run...'
+   2 4 77 150 30 1 False True 'Search'
+   7 4 251 150 9 1 False False ''
+   4 4 260 150 32 2 False True 'Shut down'
+drawn 76403825
+hot 1 Development
+development 408 464 170 60 0 1 1 289475492
+   10 1 4 168 26 0 False True 'Flat Assembler'
+   10 1 30 168 26 0 False True 'Board'
+launch Flat Assembler develop/fasm False
+after Esc 1 0 -1
+tab 3 My Computer
+tab 8 Shut down @shutdown
+after Esc 1 False
+letter 2 Calculator
+small 8 286 ['Program 0', 'Program 1', 'Program 2', 'Program 3', 'Program 4', 'Program 5', 'Program 6', 'Program 7', 'More'] 4 True
+context 848 562 170 138 5
+weekdays 1 6 4
+desktop [(0, 0, 'Shell'), (955, 669, 'A long name for a shortcut'), (0, 68, 'Calculator')] 0 -1 1
+['A long', 'name for…'] ['Shell']

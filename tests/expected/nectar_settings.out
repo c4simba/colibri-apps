@@ -1,0 +1,21 @@
+'; mine\n[launcher]\nstart=Start\n; the power button\npower=Off\nmore=Más\n\n[places]\nX=x||2\n'
+'; mine\n[launcher]\nstart=Go\n; the power button\npower=Off\n\n[places]\nX=x||2\n\n[bar]\nseconds=1\nsound=0\n'
+'[look]\naccent=coral\n'
+'[Launcher]\nstart=b\n'
+1 0
+True False True False
+False True True True Меню
+clock True True
+{'accent': 'amber', 'font_size': '16'} {}
+emerald 14
+['emerald', 'sapphire', 'amethyst', 'amber', 'coral'] 5 True True True
+widgets 0x7b0084 True 10584536
+card 400 350 400 376 376 Taskbar settings 17 emerald 14 False
+chosen amber 15 False True True ['emerald', 'sapphire', 'amethyst', 'amber', 'coral']
+label 'St' St
+"; nectar.ini - the settings of Nectar, the desktop shell (see apps/nectar/nectar.ini\n; for all it can hold). [pinned]: the programs pinned to the bar,\n; title=program|parameters|icon; [history]: the Run panel's lines - the shell\n; writes them.\n\n[launcher]\nstart=St\n\n[bar]\nseconds=0\nmonitor=0\nsound=1\nnetwork=1\n"
+"; kui.ini - the look of kui programs (lib/kui): [look] accent= a palette\n; (emerald, sapphire, amethyst, amber, coral), font_size= the text's px.\n\n[look]\naccent=amber\nfont_size=15\n"
+empty label 'Go'
+cancel @close False
+drawn 12857242
+unchanged False @close True Параметры панели

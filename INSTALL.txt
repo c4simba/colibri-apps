@@ -1,0 +1,31 @@
+Programs for KolibriOS written in MiniPy on kui
+https://github.com/c4simba/nectar
+
+  nectar      Nectar, a desktop: the taskbar with its launcher, the
+              notification area and its flyouts, the desktop's shortcuts.
+              It takes the place of @TASKBAR, @MENU and @ICON (and ends
+              them when it starts).
+  nectar.ini  its settings - the labels, the launcher's places, the bar's
+              icons, the pinned programs. Keep it next to nectar (or in
+              /sys/settings); nectar writes its changes there.
+  startmenu   Nectar's launcher alone, for the stock @TASKBAR
+  files       a small file browser
+  counter     the smallest kui program
+
+To try Nectar, start nectar (from Eolite, say) - it replaces the taskbar
+until the next boot. To keep it, put the folder on a disk that stays (here
+/hd0/1) and, in /sys/settings/autorun.dat, make the line of /SYS/@TASKBAR
+
+    /hd0/1/nectar           ""    0   # Start taskbar
+
+(the line of /SYS/@ICON can go). On a system that boots from a floppy or
+an image (/sys is the RAM disk /rd/1), save the image afterwards (RDSAVE).
+
+The launcher alone: Menu=/hd0/1/startmenu in /sys/settings/taskbar.ini
+(or startmenu copied over /sys/@MENU).
+
+Программы для KolibriOS на MiniPy и kui. Nectar - рабочий стол: панель
+задач с меню, область уведомлений, значки рабочего стола; заменяет
+@TASKBAR, @MENU и @ICON. Чтобы он запускался при загрузке, замените в
+/sys/settings/autorun.dat строку /SYS/@TASKBAR путём к nectar (см. выше)
+и сохраните образ (RDSAVE), если система загружена с дискеты или образа.
