@@ -1,4 +1,4 @@
-# lib/png.py and lib/kgfx.py (the runner puts lib/ in MINIPYPATH): PNG
+# lib/png.py and lib/kgfx.py (the runner puts lib/ in PLAINPYPATH): PNG
 # decoding (RGBA with the Sub filter, a 2-bit palette with tRNS and Up, 16-bit
 # gray with Paeth, Adam7), images (cut, keyed, scaled down and up), a canvas
 # (rectangles, gradients, anti-aliased shapes, shadows, Tahoma text) - as

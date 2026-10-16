@@ -2,11 +2,12 @@
 # launcher's button at the left, the pinned programs' icons (taskbar.pins),
 # a button per other program's window, the notification area at the right
 # (the system monitor, the sound, the network, the keyboard language, the
-# clock) and the slim show-the-desktop button at the end. The Taskbar is the
-# window's first panel: it keeps what it shows, lays out its rows - each a
-# widget: StartButton, PinButton, TaskButton, MonitorIcon, SpeakerIcon,
-# NetworkIcon, LanguageBox, ClockFace, DesktopEdge - and draws the bar under
-# them; the shell (nectar.shell) handles the events.
+# clock, the notifications' bell) and the slim show-the-desktop button at the
+# end. The Taskbar is the window's first panel: it keeps what it shows, lays
+# out its rows - each a widget: StartButton, PinButton, TaskButton,
+# MonitorIcon, SpeakerIcon, NetworkIcon, LanguageBox, ClockFace, NotesButton,
+# DesktopEdge - and draws the bar under them; the shell (nectar.shell)
+# handles the events.
 from kui.fonts import SANS
 from kui.icons import Icons
 from kui.panel import Panel, Row, K_BAR
@@ -32,6 +33,9 @@ from . import showdesktop
 from .showdesktop import DesktopEdge
 from . import pins as pinlist
 from .pins import PinButton
+from ..notes.note import Notes
+from ..notes import center
+from ..notes.center import NotesButton
 
 # rows of the bar
 R_START = 20
@@ -43,6 +47,7 @@ R_MON = 25
 R_VOL = 26
 R_DESK = 27
 R_PIN = 28
+R_NOTE = 29
 
 class Taskbar(Panel):
     def __init__(self, cfg: Config, icons: Icons, screen_w: int, screen_h: int):
@@ -65,6 +70,7 @@ class Taskbar(Panel):
         self.row_pin: dict[int, int] = {}        # rows -> pins
         self.sound = Sound()
         self.sound.open()
+        self.notes = Notes()                 # what the bell keeps
         self.names: dict[str, Item] = {}     # program file names -> their menu items (titles, icons)
         for items in [cfg.programs, cfg.places]:
             tasklist.program_names(self.names, items)
@@ -82,7 +88,7 @@ class Taskbar(Panel):
         mon_w = sysmon.WIDTH if cfg.monitor else 0
         clock_w = clock.width(cfg.seconds)
         desk_w = showdesktop.WIDTH
-        self.tray_x = self.screen_w - (8 + mon_w + vol_w + net_w + language.WIDTH + 4 + clock_w + desk_w)
+        self.tray_x = self.screen_w - (8 + mon_w + vol_w + net_w + language.WIDTH + 4 + clock_w + center.WIDTH + desk_w)
         x0 = self.start_button.w + 10
         self.row_task = {}
         self.row_pin = {}
@@ -125,7 +131,10 @@ class Taskbar(Panel):
             x += net_w
         self.rows.append(Row(Item(title="language"), R_LANG, x, 8, language.WIDTH - 4, BAR_H - 16, LanguageBox(self.languages.name(self.lang)), 2))
         self.face = ClockFace(self.clock)
-        self.rows.append(Row(Item(title="clock"), R_CLOCK, x + language.WIDTH + 4, 4, clock_w, BAR_H - 8, self.face, 2))
+        x += language.WIDTH + 4
+        self.rows.append(Row(Item(title="clock"), R_CLOCK, x, 4, clock_w, BAR_H - 8, self.face, 2))
+        x += clock_w
+        self.rows.append(Row(Item(title="notifications"), R_NOTE, x, 4, center.WIDTH - 2, BAR_H - 8, NotesButton(self.notes), 2))
         self.rows.append(Row(Item(title="desktop"), R_DESK, self.screen_w - desk_w, 0, desk_w, BAR_H, DesktopEdge(), 2))
 
     def task_of_row(self, i: int) -> int:
@@ -154,14 +163,14 @@ class Taskbar(Panel):
         n = (x - self.rows[rows[0]].x) // pinlist.WIDTH
         return self.row_pin[rows[max(0, min(len(rows) - 1, n))]]
 
-    def refresh(self, me: int, active: int) -> bool:
-        """Look at the windows, the time, the language and the network again;
-        True if the bar must be drawn again."""
+    def refresh(self, me: int, active: int, toasts: list[int]) -> bool:
+        """Look at the windows (but the toasts', these pids), the time, the
+        language and the network again; True if the bar must be drawn again."""
         changed = False
         if active != me and active != self.active:
             self.active = active
             changed = True
-        now = tasklist.read(me, self.names)
+        now = tasklist.read(me, self.names, toasts)
         if not tasklist.same(now, self.tasks):
             changed = True
         self.tasks = now

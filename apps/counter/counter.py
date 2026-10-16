@@ -1,6 +1,6 @@
 # A KolibriOS window described with decorators (apps/files is a bigger one):
-#   make counter        (MINIPYPATH=lib minipy --compile --target kolibri apps/counter/counter.py)
-# or, on KolibriOS, run it with the interpreter: minipy counter.py (kui next to it)
+#   make counter        (PLAINPYPATH=lib plainpy --compile --target kolibri apps/counter/counter.py)
+# or, on KolibriOS, run it with the interpreter: plainpy counter.py (kui next to it)
 from kui import Window, window
 
 count = 0

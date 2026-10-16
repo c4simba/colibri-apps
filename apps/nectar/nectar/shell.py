@@ -20,6 +20,9 @@
 #                                         wheel turns the volume (when the shell's
 #                                         window is active: KolibriOS's rule)
 #   language                              tooltip; a click: the layouts to choose from
+#   the bell (next to the clock)          the notifications that came (nectar.notes):
+#                                         each shows as a toast over the bar, then
+#                                         sinks into it; a click: their list
 #   the bar's right end                   minimize all windows (again: back)
 #   desktop shortcuts                     a click selects, a double click starts,
 #                                         dragged: to another cell (icon.ini);
@@ -31,7 +34,9 @@
 # The bar, the launcher, its cascades, context menus, flyouts, tooltips and
 # the windows' card are the panels of one always-on-top window (kui.surface),
 # each drawing itself; the shortcuts - and one being dragged - are on the
-# background layer (nectar.desktop.desktopicons, nectar.desktop.drag).
+# background layer (nectar.desktop.desktopicons, nectar.desktop.drag); the
+# toasts are windows of their own (notify, nectar.notes.window). Notifications
+# come over IPC (from notify standing in for @notify: nectar.notes.area).
 import sys
 import kolibri as k
 from kui.icons import Icons
@@ -40,12 +45,13 @@ from kui.flyout import Flyout
 from kui import tooltip
 from kui.tooltip import Tooltip
 from kui.dialog import Backdrop
+from kui.surface import SETTLE
 from . import config
 from .config import Config, Item, config_paths, load_config
 from . import system
 from .theme import BAR_H, CELL
 from .menu.controller import MenuController
-from .taskbar.bar import Taskbar, R_START, R_TASK, R_LANG, R_CLOCK, R_NET, R_MON, R_VOL, R_DESK, R_PIN
+from .taskbar.bar import Taskbar, R_START, R_TASK, R_LANG, R_CLOCK, R_NET, R_MON, R_VOL, R_DESK, R_PIN, R_NOTE
 from .taskbar import tasks as tasklist
 from .taskbar import pins as pinlist
 from .taskbar import switcher
@@ -66,10 +72,16 @@ from .dialogs import shutdown
 from .dialogs.shutdown import Shutdown
 from .run.panel import RunPanel
 from .run.files import Files
+from .notes import area as notearea
+from .notes.note import Note, parse
+from .notes.toast import Toasts
+from .notes.center import NotesPanel
+from .autorun import Outcome
 
 REFRESH = 50               # how often the bar looks at the windows, clock, language, network, sound
 ALT_POLL = 5               # how often a switcher looks whether Alt is still held
 TAKES_OVER = ["@taskbar", "@menu", "@icon"]
+IPC_SIZE = 8192            # the notifications' messages wait there
 
 class Shell(MenuController):
     def __init__(self, cfg: Config, icons: Icons, screen_w: int, screen_h: int, russian: bool):
@@ -104,6 +116,15 @@ class Shell(MenuController):
         self.pin_drag: pinlist.PinDrag = None  # a press on a pinned program (a drag once it moves)
         self.hidden: list[int] = []          # the windows "show the desktop" minimized
         self.files = Files()                 # the folders the Run panel completes paths in
+        self.notes = self.bar.notes          # what the bell keeps
+        self.notes_panel: NotesPanel = None  # its list while it is open
+        self.settings_panel: SettingsPanel = None   # Taskbar Settings while it is open
+        notify = system.program_dir() + "/notify"
+        self.toasts = Toasts(notify if k.file_exists(notify) else "", screen_w, screen_h, self.bottom)
+        self.waiting: list[Note] = []        # notifications for toasts once nothing is open
+        self.came = 0                        # how many notifications came
+        self.ipc: buffer = None              # where they come (fn 60)
+        self.shared = 0                      # "nectar-shell": the shell's pid for notify
 
     def small_icon(self, run: str) -> int:
         """The 18x18 icon menu.dat gives a program (-1: none)."""
@@ -122,7 +143,9 @@ class Shell(MenuController):
         self.next_refresh = now + REFRESH
         if now < self.takeover_until and system.close_copies(TAKES_OVER):
             k.background_redraw()                    # (their icons gone; ours come with event 5)
-        changed = self.bar.refresh(self.me, k.active_window()) or self.dirty
+        for t in self.toasts.gone():                 # (a toast's window that ended without a word)
+            self.to_bell(t.note)
+        changed = self.bar.refresh(self.me, k.active_window(), self.toasts.pids()) or self.dirty
         sampled = self.bar.look_at_system(now)
         self.dirty = False
         if changed:
@@ -193,6 +216,10 @@ class Shell(MenuController):
         elif r.kind == R_LANG:
             p = LayoutsPanel(level, x, self.bottom, self.screen_w, self.russian, self.bar.languages,
                              system.program_exists(layouts.SETTINGS))
+        elif r.kind == R_NOTE:
+            self.notes_panel = NotesPanel(level, x, self.bottom, self.screen_w, self.russian, self.notes)
+            p = self.notes_panel
+            self.toasts.sink_all()                   # (the toasts showing come into it)
         else:
             p = Calendar(level, x, self.bottom, self.screen_w, self.russian)
         self.open_flyout(p, row)
@@ -212,8 +239,9 @@ class Shell(MenuController):
         self.hide_tip(False)
         if len(self.panels) > 1:
             self.end_menus(False)
-        self.open_flyout(SettingsPanel(len(self.panels), k.mouse_screen_pos()[0], self.bottom, self.screen_w, self.russian,
-                                       self.cfg, system.program_dir()), -1)
+        self.settings_panel = SettingsPanel(len(self.panels), k.mouse_screen_pos()[0], self.bottom, self.screen_w,
+                                            self.russian, self.cfg, system.program_dir())
+        self.open_flyout(self.settings_panel, -1)
 
     def open_flyout(self, p: Flyout, row: int) -> None:
         """Show a flyout (row: the bar's row it belongs to, -1: none)."""
@@ -288,6 +316,10 @@ class Shell(MenuController):
         elif run == "@close":
             self.close_menus()
             self.next_refresh = 0
+        elif run == "@default" and self.settings_panel is not None:   # (Taskbar Settings made this the default shell)
+            o = self.settings_panel.outcome
+            self.close_menus()
+            self.made_default(o)
         else:
             self.close_menus()
             system.start(run)
@@ -304,6 +336,8 @@ class Shell(MenuController):
 
     def end_menus(self, reshape: bool = True) -> None:
         self.flyout = None
+        self.notes_panel = None
+        self.settings_panel = None
         self.switcher = None
         self.close_from(1, reshape)
         bar = self.panels[0]
@@ -359,6 +393,67 @@ class Shell(MenuController):
         elif run != "":
             system.start(run, it.args)
         self.next_refresh = 0
+
+    # ---- notifications
+    def receive(self) -> None:
+        """IPC messages: notifications (notify standing in for @notify), toasts that went."""
+        for m in k.ipc_receive(self.ipc):
+            text = m[1]
+            if text.startswith(notearea.NOTE):
+                n = parse(config.decode(text[len(notearea.NOTE):].encode()))
+                if not n.empty():
+                    self.arrive(n)
+            elif text.startswith(notearea.DONE):
+                parts = text[len(notearea.DONE):].split(" ")
+                t = self.toasts.done(parts[0]) if len(parts) == 2 else None
+                if t is not None and parts[1] == notearea.SUNK:
+                    self.to_bell(t.note)
+
+    def arrive(self, n: Note) -> None:
+        """A notification: into the bell's list if it is open, else a toast
+        once no menu is open (and the screen under them is drawn again)."""
+        n.time = clock.now_text(False)
+        self.came += 1
+        n.seq = self.came
+        if self.notes_panel is not None:
+            self.to_bell(n)
+        else:
+            self.waiting.append(n)
+
+    def show_waiting(self, now: int) -> None:
+        self.toasts.tick(now)
+        if len(self.waiting) == 0 or len(self.panels) > 1 or now < self.shrunk_at + 2 * SETTLE or self.toasts.busy():
+            return
+        while len(self.waiting) > 0:
+            n = self.waiting.pop(0)
+            if not self.toasts.show(n):
+                system.log("a notification went straight into the bell: " + self.toasts.why)
+                self.to_bell(n)
+
+    def to_bell(self, n: Note) -> None:
+        """A notification the bell keeps (a toast sank into it)."""
+        self.notes.add(n)
+        if self.notes_panel is not None:
+            self.notes_panel.arrived(n)
+            self.show_flyout()
+        else:
+            self.update_tray(R_NOTE)
+
+    def made_default(self, o: Outcome) -> None:
+        """What "Make the default shell" did, as a notification (and RDSAVE to keep it)."""
+        ru = self.russian
+        lines: list[str] = []
+        if len(o.replaced) > 0:
+            lines.append(("Вместо " if ru else "Instead of ") + ", ".join(o.replaced))
+        else:
+            lines.append("Загружается вместе с системой" if ru else "It starts with the system")
+        if o.notify:
+            lines.append("Уведомления программ - здесь" if ru else "Programs' notifications come here")
+        if o.ramdisk:
+            lines.append("Сохраните образ системы (RDSAVE)" if ru else "Save the system's image (RDSAVE)")
+        self.arrive(Note("Nectar - оболочка по умолчанию" if ru else "Nectar is the default shell", lines, "O"))
+        if o.ramdisk and system.program_exists("rdsave"):
+            system.start("rdsave")
 
     # ---- programs pinned to the bar
     def pin_state(self, t: tasklist.Task) -> int:
@@ -473,7 +568,7 @@ class Shell(MenuController):
             self.render(p)
             self.show_part(p, 0, 0, p.w + p.shadow, p.h + p.shadow)
             return
-        tasks = tasklist.by_stack(tasklist.read(self.me, self.bar.names))
+        tasks = tasklist.by_stack(tasklist.read(self.me, self.bar.names, self.toasts.pids()))
         n = len(tasks)
         if n == 0:
             return
@@ -648,7 +743,7 @@ class Shell(MenuController):
             if i == 0:
                 self.toggle_start(False)
                 return
-            if kind == R_NET or kind == R_CLOCK or kind == R_MON or kind == R_VOL or kind == R_LANG:
+            if kind == R_NET or kind == R_CLOCK or kind == R_MON or kind == R_VOL or kind == R_LANG or kind == R_NOTE:
                 self.toggle_flyout(i)
                 return
             if len(self.panels) > 1:
@@ -749,13 +844,14 @@ class Shell(MenuController):
 
     # ---- running
     def run(self) -> None:
-        k.set_event_mask(k.EVM_REDRAW | k.EVM_KEY | k.EVM_BUTTON | k.EVM_BACKGROUND | k.EVM_MOUSE)
+        k.set_event_mask(k.EVM_REDRAW | k.EVM_KEY | k.EVM_BUTTON | k.EVM_BACKGROUND | k.EVM_MOUSE | k.EVM_IPC)
         k.set_window_zpos(k.ZPOS_ALWAYS_TOP)
         for hk in [(91, 0), (92, 0), (219, 0), (220, 0), (1, 0x30), (1, 0x300), (62, 0x300), (15, 0x300), (15, 0x301),
                    (0, 0x33), (0, 2), (88, 0x110)]:
             k.set_hotkey(hk[0], hk[1])
         self.now = k.uptime_ticks()
         self.buttons = k.mouse_buttons()             # (a button still held from the click that started us)
+        self.receive()                               # (what came while the shell was starting)
         while True:
             try:
                 self.step()
@@ -772,6 +868,8 @@ class Shell(MenuController):
                     self.dialog = None
                     self.backdrop = None
                     self.flyout = None
+                    self.notes_panel = None
+                    self.settings_panel = None
                     self.switcher = None
                     self.tip_shown = False
                     self.close_from(1)
@@ -791,6 +889,8 @@ class Shell(MenuController):
             wait = max(1, min(wait, self.flyout_next - now))
         if self.switcher is not None:
             wait = min(wait, ALT_POLL)
+        if len(self.waiting) > 0 or self.toasts.busy():
+            wait = min(wait, SETTLE)
         ev = k.wait_event_timeout(wait)
         now = k.uptime_ticks()
         self.now = now
@@ -815,6 +915,8 @@ class Shell(MenuController):
                 self.drag.ghost.redraw()
         elif ev == k.EV_MOUSE:
             self.mouse(now)
+        elif ev == k.EV_IPC:
+            self.receive()
         self.tick(now)
         if self.switcher is not None and k.control_keys() & (k.MOD_LALT | k.MOD_RALT) == 0:
             self.switch_to(True)                     # (Alt let go)
@@ -834,6 +936,7 @@ class Shell(MenuController):
             elif self.menu_seen_active:
                 self.close_menus()               # another window took the focus
         self.reshape()                           # (panels gone without one: the window as they need it)
+        self.show_waiting(k.uptime_ticks())
 
 def main() -> None:
     try:
@@ -843,6 +946,9 @@ def main() -> None:
 
 def start() -> None:
     system.close_copies([system.my_name()] + TAKES_OVER)
+    ipc = k.ipc_area(IPC_SIZE)                       # (first: notifications may come while the rest is read)
+    k.set_ipc_area(ipc)
+    shared = notearea.publish()
     k.set_current_folder("/sys")
     size = k.screen_size()
     k.set_screen_work_area(0, 0, size[0] - 1, size[1] - BAR_H - 1)
@@ -854,9 +960,11 @@ def start() -> None:
     system.log("screen " + str(size[0]) + "x" + str(size[1]) + ", settings: " + config.loaded_from
                + ", icons: " + icons.describe() + ", " + str(len(cfg.desktop)) + " desktop shortcuts")
     shell = Shell(cfg, icons, size[0], size[1], russian)
+    shell.ipc = ipc
+    shell.shared = shared
     bar = shell.bar
     shell.panels.append(bar)
-    bar.refresh(shell.me, k.active_window())
+    bar.refresh(shell.me, k.active_window(), [])
     bar.layout()
     shell.render(bar)
     shell.show()

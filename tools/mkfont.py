@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render TrueType fonts into a MiniPy module of kgfx.Font objects.
+"""Render TrueType fonts into a PlainPy module of kgfx.Font objects.
 
     python3 tools/mkfont.py OUT.py NAME=FONT.ttf:SIZE[:aa] ...
 
@@ -9,7 +9,7 @@ their ink and stored as 4-bit coverage (1 bit where it is only ink or not). SIZE
 embedded bitmap strikes (Wine's Tahoma has 8..16 px) is drawn from the strike
 of that size - crisp, as Windows XP drew Tahoma 8pt - unless ":aa" asks for
 the anti-aliased outlines. Needs Pillow and fontTools (only here: the
-generated module is plain MiniPy).
+generated module is ordinary PlainPy).
 
     python3 tools/mkfont.py lib/kgfx_tahoma.py \\
         TAHOMA=tahoma.ttf:11 TAHOMA_BOLD=tahomabd.ttf:11 TAHOMA_BIG=DejaVuSans-Bold.ttf:15:aa

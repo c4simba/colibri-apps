@@ -1,4 +1,4 @@
-# Builds the programs for KolibriOS with minipy, runs the tests (in the
+# Builds the programs for KolibriOS with plainpy, runs the tests (in the
 # interpreter and compiled) and - for a tag v1.2.3 - publishes the release
 # 1.2.3: kolibrios-apps.zip and every program on its own, under the same
 # names from release to release, so the latest is always at
@@ -16,9 +16,9 @@ permissions:
   contents: read
 
 env:
-  # where minipy comes from: its latest release - or, while it has none, its
-  # sources (a private repository needs a MINIPY_TOKEN secret that can read it)
-  MINIPY_REPO: c4simba/minipy
+  # where plainpy comes from: its latest release - or, while it has none, its
+  # sources (a private repository needs a PLAINPY_TOKEN secret that can read it)
+  PLAINPY_REPO: c4simba/plainpy
 
 jobs:
   build:
@@ -27,22 +27,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Tools
         run: sudo apt-get update && sudo apt-get install -y fasm zip
-      - name: minipy
+      - name: plainpy
         env:
-          GH_TOKEN: ${{ secrets.MINIPY_TOKEN || github.token }}
+          GH_TOKEN: ${{ secrets.PLAINPY_TOKEN || github.token }}
         run: |
-          d="$RUNNER_TEMP/minipy"; mkdir -p "$d"
-          if gh release download -R "$MINIPY_REPO" -p minipy-linux-x86_64.tar.gz -D "$RUNNER_TEMP"; then
-            tar xzf "$RUNNER_TEMP/minipy-linux-x86_64.tar.gz" -C "$d" --strip-components=1
+          d="$RUNNER_TEMP/plainpy"; mkdir -p "$d"
+          if gh release download -R "$PLAINPY_REPO" -p plainpy-linux-x86_64.tar.gz -D "$RUNNER_TEMP"; then
+            tar xzf "$RUNNER_TEMP/plainpy-linux-x86_64.tar.gz" -C "$d" --strip-components=1
           else
-            echo "$MINIPY_REPO has no release: building minipy from its sources"
-            gh repo clone "$MINIPY_REPO" "$RUNNER_TEMP/minipy-src" -- --depth 1
-            make -C "$RUNNER_TEMP/minipy-src" -j"$(nproc)"
-            make -C "$RUNNER_TEMP/minipy-src" install PREFIX="$d"
+            echo "$PLAINPY_REPO has no release: building plainpy from its sources"
+            gh repo clone "$PLAINPY_REPO" "$RUNNER_TEMP/plainpy-src" -- --depth 1
+            make -C "$RUNNER_TEMP/plainpy-src" -j"$(nproc)"
+            make -C "$RUNNER_TEMP/plainpy-src" install PREFIX="$d"
           fi
           echo "$d/bin" >> "$GITHUB_PATH"
-      - name: minipy's version
-        run: minipy --version
+      - name: plainpy's version
+        run: plainpy --version
       - name: Tests (interpreter)
         run: make test TARGET=interp
       - name: Tests (compiled)

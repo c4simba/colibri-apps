@@ -1,4 +1,4 @@
-# png - a PNG decoder in MiniPy (over the standard library's zlib).
+# png - a PNG decoder in PlainPy (over the standard library's zlib).
 # Works compiled (every target) and in the interpreter.
 #
 #   w, h, pixels = png.decode(data)        # data: the file's bytes

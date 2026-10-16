@@ -1,12 +1,13 @@
-# Nectar and kui: programs for KolibriOS in MiniPy
+# Nectar and kui: programs for KolibriOS in PlainPy
 
 Programs for [KolibriOS](https://kolibrios.org) written in Python and
-compiled by [minipy](https://github.com/c4simba/minipy) into small native
+compiled by [plainpy](https://github.com/c4simba/plainpy) into small native
 KolibriOS executables - and what they are made of: **kui**, a UI toolkit,
 `kgfx`, a graphics library, PNG decoding and KolibriOS's own fonts.
 **Nectar**, a whole desktop - the taskbar with its launcher, the
-notification area and its flyouts, the desktop's shortcuts - is the biggest
-of them.
+notification area and its flyouts, the desktop's shortcuts, the system's
+notifications - is the biggest of them. The website, with the screenshots and
+how to install it: **[c4simba.github.io/colibri-apps](https://c4simba.github.io/colibri-apps/)**.
 
 ![Nectar: the launcher with a submenu open](apps/nectar/screenshots/launcher.png)
 
@@ -19,21 +20,26 @@ put anywhere on a KolibriOS disk:
 |---|---|
 | [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them, `nectar.ini` and [INSTALL.txt](INSTALL.txt) |
 | [nectar](../../releases/latest/download/nectar) + [nectar.ini](../../releases/latest/download/nectar.ini) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`) and its settings |
+| [notify](../../releases/latest/download/notify) | Nectar's notifications: the toasts' windows and what `@notify` hands them over with - keep it next to `nectar` |
 | [startmenu](../../releases/latest/download/startmenu) | Nectar's launcher alone, for the stock `@TASKBAR` |
 | [files](../../releases/latest/download/files) | a small file browser |
 | [counter](../../releases/latest/download/counter) | the smallest kui program |
 
 To try Nectar, start `nectar` (from Eolite, say): it replaces the taskbar
-until the next boot. To keep it, put it (with `nectar.ini`) on a disk that
-stays - `/hd0/1`, say - and make the line of `/SYS/@TASKBAR` in
-`/sys/settings/autorun.dat`
+until the next boot. To keep it, put it (with `nectar.ini` and `notify`) on a
+disk that stays - `/hd0/1`, say -, start it from there and press Taskbar
+Settings' (the bar's right button) **Make the default shell**: it does the
+rest - `/sys/settings/autorun.dat` starts Nectar where it started
+`/SYS/@TASKBAR` (the lines of `@ICON` and `@DOCKY` go), `/sys/@notify` passes
+the system's notifications to Nectar, and on a system booted from a floppy or
+an image RDSAVE opens to save the image. By hand: make the line of
+`/SYS/@TASKBAR` in `/sys/settings/autorun.dat`
 
 ```text
 /hd0/1/nectar           ""    0   # Start taskbar
 ```
 
-(the line of `/SYS/@ICON` can go); on a system booted from a floppy or an
-image, save the image afterwards (`RDSAVE`). Older releases: [all of them](../../releases).
+(the line of `/SYS/@ICON` can go) and save the image (`RDSAVE`). Older releases: [all of them](../../releases).
 
 ## Screenshots
 
@@ -44,7 +50,8 @@ image, save the image afterwards (`RDSAVE`). Older releases: [all of them](../..
 | ![the network](apps/nectar/screenshots/network.png) | ![the calendar](apps/nectar/screenshots/calendar.png) |
 | ![the keyboard layouts](apps/nectar/screenshots/layouts.png) | ![Taskbar Settings](apps/nectar/screenshots/settings.png) |
 | ![Alt+Tab](apps/nectar/screenshots/switcher.png) | ![shortcuts dragged](apps/nectar/screenshots/drag.png) |
-| ![shutting down](apps/nectar/screenshots/shutdown.png) | |
+| ![notifications](apps/nectar/screenshots/notifications.png) | ![the bell's list](apps/nectar/screenshots/notes.png) |
+| ![made the default shell](apps/nectar/screenshots/default.png) | ![shutting down](apps/nectar/screenshots/shutdown.png) |
 
 ## Nectar
 
@@ -67,8 +74,8 @@ notification area - the system monitor (the processor's load of the last
 seconds as thin bars), the sound (a speaker, its waves the volume; only with
 a sound card), the network (four bars, lit while packets flow), the keyboard
 layout (Ctrl+Shift or Shift+Shift goes to the next one, from `lang.ini` and
-`keymap.key` as `@TASKBAR` does) and the clock (with the seconds, if
-wanted) - and at its right end a slim
+`keymap.key` as `@TASKBAR` does), the clock (with the seconds, if
+wanted) and next to it the notifications' bell - and at its right end a slim
 button that minimizes every window and, clicked again, brings them back.
 Shortcuts on the desktop (a click selects, a double click starts, the right
 button opens `icon.ini`'s menu) have their labels on dark translucent pills;
@@ -119,6 +126,33 @@ go as a menu goes (a click elsewhere, Esc, another window taking the focus):
   Українська ...), the current one checked; a click, or the arrows and
   Enter, switches to one; "Keyboard settings" starts `/sys/setup`.
 
+Notifications are the system's own: what programs say through `@notify`
+(`@notify "'Title\nText' -tI"`, notify3's parameters: a title, a symbol -
+error, warning, done, information, network, mail, download, sound,
+application, folder, component -, `d` for one that stays until it is
+clicked, `c` for one a click does not close) and what the shell says itself.
+Each shows as a toast over the bar's right end - a card in the look of the
+flyouts with the symbol drawn on a disc of its color -, the newest over the
+others (three at a time); it stays five seconds and one more a line (longer
+while the pointer is on it), then sinks behind the bar into the bell, which
+lights in the accent with their number; a click on it closes it at once.
+When one goes, those over it come down in its place. The bell opens the
+list - the latest first, those that came since it was last looked at marked
+with a line of the accent, each with its time and an x; "Clear all", the
+wheel scrolls - and opening it brings the toasts showing into it. A toast is
+a window of its own (a thread has one window, and the shell's is a
+rectangle round its panels, so a toast in it would freeze a band as wide as
+the screen for as long as it shows): the shell draws the card over the
+screen beneath it and `notify`, a small program next to it, shows the
+picture, sinks it and says so (IPC; the shell's pid in a shared area).
+`notify` started as `@notify` is hands the notification to the shell - or,
+without one, to the system's notifier; Make the default shell puts at
+`/sys/@notify` a program of some 150 bytes that starts `notify` with the same
+parameters (`notify` itself, 20 KB, would take the floppy image's last
+room), keeping the system's notifier as `/sys/notify3`. A progress bar
+(`p`) stays notify3's: its program drives it through notify3's own shared
+area.
+
 Run... (the launcher's place, the bar's menu) opens the Run panel over the
 launcher's button: a line to type a program, a folder or a document into,
 its parameters after it, and under it what the line may become - the lines
@@ -137,7 +171,9 @@ Taskbar Settings (the bar's menu) is a card for the shell itself: the
 launcher button's label, the accent (five palettes: emerald, sapphire,
 amethyst, amber, coral - each a sheen of three colors), the size of the
 text (13 to 16 px), the clock's seconds, which icons the notification area
-shows, and a link that opens `nectar.ini` in the editor. Apply writes
+shows, a link that opens `nectar.ini` in the editor - and Startup's **Make
+the default shell** (once it is, "Starts with the system"), which does its
+part at once and says how it went in a notification. Apply writes
 `nectar.ini` (`[launcher]`, `[bar]`) and `kui.ini` (`[look]`: the accent
 and the text's size are kui's, shared by every kui program in that folder)
 and starts the shell again - kui reads `kui.ini` as it is loaded, so the
@@ -185,8 +221,8 @@ processes: the launcher is drawn when the shell starts and opens at once.
 
 ## kui
 
-kui is a toolkit for KolibriOS programs written in MiniPy, compiled or in the
-interpreter (minipy runs on KolibriOS too). It has two levels. `kui.window`
+kui is a toolkit for KolibriOS programs written in PlainPy, compiled or in the
+interpreter (plainpy runs on KolibriOS too). It has two levels. `kui.window`
 (what `import kui` gives) describes a window with decorators - a paint
 function, buttons, keys, clicks, double clicks, the wheel, UTF-8 text:
 
@@ -238,6 +274,8 @@ and the package `apps/nectar/nectar/` is the desktop's own, by what it is about:
 | `nectar` module | |
 |---|---|
 | `config`, `system`, `theme` | `nectar.ini`, `menu.dat`, `icon.ini`, defaults; starting programs; the shell's sizes |
+| `autorun` | Make the default shell: `autorun.dat` rewritten byte for byte, the `@notify` stub (machine code made there) |
+| `notes/` | notifications: `note` (`@notify`'s parameters, the bell's list), `toast` (drawn over the screen, stacked, moved down), `center` (the bell, its list), `card` (symbols, wrapped lines), `area` (the shared areas and messages), `window` and `forward` (`notify.py`'s two parts) |
 | `menu/` | `startpanel` (the launcher and its rows' widgets), `controller` (kui's menus with the launcher), `standalone` |
 | `taskbar/` | `bar` (the panel), its widgets `startbutton`, `pins` (pinned programs, dragged), `tasks`, `sysmon`, `volume`, `network`, `language`, `clock`, `showdesktop`; `contextmenu`, `switcher` (Alt+Tab) |
 | `flyouts/` | `system`, `sound`, `netinfo` (the network's details), `calendar`, `layouts` (the keyboard's), `settings` (Taskbar Settings) |
@@ -277,7 +315,7 @@ and everything but the two KolibriOS calls runs on any system
   a bold face drawn twice; `tests/kfont_glyphs.py` reads a `.kf` made
   up in memory.
 
-`png` decodes PNG files in MiniPy over the standard library's `zlib`: every
+`png` decodes PNG files in PlainPy over the standard library's `zlib`: every
 color type and bit depth, palettes with `tRNS`, Adam7 interlacing.
 `tests/kgfx_draw.py` checks both (pixel values and checksums, the same
 on every target and in the interpreter).
@@ -294,12 +332,12 @@ should be in a release, a name in `APPS`.
 
 ## Building
 
-What it takes: [minipy](https://github.com/c4simba/minipy) - a release
-(`minipy_amd64.deb`, `minipy.x86_64.rpm`, a tarball) or its sources and
+What it takes: [plainpy](https://github.com/c4simba/plainpy) - a release
+(`plainpy_amd64.deb`, `plainpy.x86_64.rpm`, a tarball) or its sources and
 `sudo make install` - and fasm on the PATH (`sudo apt install fasm`).
 
 ```sh
-make                    # the programs for KolibriOS: build/kolibrios/nectar, startmenu, counter, files
+make                    # the programs for KolibriOS: build/kolibrios/nectar, startmenu, notify, counter, files
 make nectar             # one of them
 make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
@@ -307,9 +345,9 @@ make dist               # build/kolibrios-apps.zip (and its files one by one in 
 make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/run-kolibrios.sh)
 ```
 
-(`MINIPY=path/minipy`, `FASM=path/fasm` take others than those on the PATH.)
+(`PLAINPY=path/plainpy`, `FASM=path/fasm` take others than those on the PATH.)
 The programs are compiled with `lib/` on the module path
-(`MINIPYPATH=lib minipy --compile --target kolibri apps/nectar/desktop.py`).
+(`PLAINPYPATH=lib plainpy --compile --target kolibri apps/nectar/desktop.py`).
 
 `tests/` run without KolibriOS, offscreen, both in the interpreter and
 compiled (`tests/run_tests.sh`; expected outputs in `tests/expected`):
@@ -318,19 +356,23 @@ drawing), `nectar_tray` the monitor's arithmetic, the volume's mapping, the
 Alt+Tab card, a dragged shortcut's cell and `icon.ini`, pins moved and the
 layouts' flyout, `nectar_run` the Run panel (the line, suggestions over a
 made-up disk, what lines run, the history), `nectar_settings` the settings
-card and the ini keys it writes, `kgfx_draw` and `kfont_glyphs` the
-graphics. `startmenu_kolibri` runs the stand-alone launcher on the scripted
-KolibriOS of minipy's `tests/x86run.py`:
-`TARGET=kolibri RUN="python3 <minipy>/tests/x86run.py" make test`.
+card and the ini keys it writes, `nectar_notes` the notifications (`@notify`'s
+parameters, toasts, the bell and its list, `autorun.dat` made to start
+Nectar), `kgfx_draw` and `kfont_glyphs` the graphics. `startmenu_kolibri` runs the stand-alone launcher on the scripted
+KolibriOS of plainpy's `tests/x86run.py`:
+`TARGET=kolibri RUN="python3 <plainpy>/tests/x86run.py" make test`.
 
 GitHub Actions (`.github/workflows/build.yml`) builds and tests it on every
-push with minipy's latest release; a tag `v1.2.3` publishes the release
-1.2.3 with the files above.
+push with plainpy's latest release; a tag `v1.2.3` publishes the release
+1.2.3 with the files above. `.github/workflows/pages.yml` publishes the
+website - `site/index.html` with `apps/nectar/screenshots/` - on GitHub Pages
+(once, in the repository's Settings -> Pages: Source "GitHub Actions"),
+again for every release, which it names.
 
 ## Layout
 
 ```text
-apps/nectar/          Nectar: desktop.py, startmenu.py, the package nectar/, nectar.ini, screenshots/
+apps/nectar/          Nectar: desktop.py, startmenu.py, notify.py, the package nectar/, nectar.ini, screenshots/
 apps/files/           the file browser
 apps/counter/         the smallest kui program
 lib/kui/              the toolkit
@@ -338,8 +380,9 @@ lib/kgfx.py           pictures, fonts, drawing (kgfx_sans.py, kgfx_tahoma.py: fo
 lib/png.py            PNG decoding
 lib/kfont.py          KolibriOS's .kf fonts as kgfx fonts
 tests/                the tests and their expected outputs
+site/                 the website (GitHub Pages: .github/workflows/pages.yml)
 tools/                mkfont.py (TrueType fonts into kgfx modules), run-kolibrios.sh (QEMU)
 ```
 
-`import kolibri` - the KolibriOS system functions - is minipy's own
-(`lib/kolibri.py` of minipy, installed with it).
+`import kolibri` - the KolibriOS system functions - is plainpy's own
+(`lib/kolibri.py` of plainpy, installed with it).

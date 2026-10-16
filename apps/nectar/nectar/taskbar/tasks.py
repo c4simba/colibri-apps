@@ -3,9 +3,10 @@
 #
 # A window gets a button like @TASKBAR gives it one: processes named "@..."
 # (system daemons), OS/IDLE, zero-sized windows, the open dialog and old
-# @ICON's 51x51 icon windows are left out. Its title and icon come from the
-# menu's item that starts the same program file (calc -> "Calculator"),
-# else the process name.
+# @ICON's 51x51 icon windows are left out - and the shell's toasts, and the
+# system's notifier kept as notify3 when Nectar took the place of @notify.
+# Its title and icon come from the menu's item that starts the same program
+# file (calc -> "Calculator"), else the process name.
 import kolibri as k
 from kgfx import Canvas
 from kui.fonts import SANS, SANS_BOLD
@@ -43,13 +44,16 @@ def program_names(names: dict[str, Item], items: list[Item]) -> None:
             if name not in names or names[name].icon < 0:
                 names[name] = it
 
-def read(me: int, names: dict[str, Item]) -> list[Task]:
-    """The windows to show, in the order of their slots."""
+def read(me: int, names: dict[str, Item], skip: list[int] = None) -> list[Task]:
+    """The windows to show, in the order of their slots (skip: pids left out)."""
     out: list[Task] = []
     for t in k.threads():
         name = t.name
         low = name.lower()
-        if t.slot == me or name.strip() == "" or name.startswith("@") or low == "os/idle" or low.startswith("opendial"):
+        if t.slot == me or name.strip() == "" or name.startswith("@") or low == "os/idle" or low.startswith("opendial") \
+                or low == "notify3":
+            continue
+        if skip is not None and t.pid in skip:
             continue
         if t.window_w == 0 and t.window_h == 0:
             continue

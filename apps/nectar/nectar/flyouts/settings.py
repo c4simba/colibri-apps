@@ -3,7 +3,10 @@
 # look: kui.ini), the clock's seconds and the notification area's icons
 # (nectar.ini's [launcher] and [bar]), and nectar.ini itself, to edit by hand.
 # Apply writes the files and starts the shell again (the new one ends this
-# one): the look is taken as the shell's modules are loaded.
+# one): the look is taken as the shell's modules are loaded. "Make the
+# default shell" does its part at once (nectar.autorun: autorun.dat starts
+# Nectar instead of @TASKBAR, @ICON, @DOCKY; notify is /sys/@notify) and the
+# card goes - the shell says how it went in a notification.
 #
 #   Taskbar settings
 #   Applying them restarts the taskbar
@@ -14,6 +17,7 @@
 #   Icons         [x] System load
 #                 [x] Volume
 #                 [x] Network
+#   Startup       [ Make the default shell ]     (or: v Starts with the system)
 #   nectar.ini >               [Cancel] [Apply]
 import sys
 import kolibri as k
@@ -26,13 +30,16 @@ from kui.flyout import Flyout, anchored
 from kui.textinput import LineEdit, TextField
 from kui.widgets import PushButton, TextButton, Tab, CheckBox, Swatch
 from kui.draw import middle
+from kui import glyphs
 from .. import config
 from ..config import Config
 from .. import system
-from ..theme import LINE_SOFT, TEXT_DIM, TEXT_FAINT, DANGER, PALETTE_NAMES, palette
+from .. import autorun
+from ..autorun import Outcome
+from ..theme import LINE_SOFT, TEXT_DIM, TEXT_FAINT, DANGER, ACCENT, PALETTE_NAMES, palette
 
-W = 400
-H = 376
+W = 430
+H = 420
 LEFT = 18                  # the names
 CONTROLS = 150             # the controls
 FIELD_Y = 66
@@ -41,6 +48,7 @@ SIZE_Y = 148
 SECONDS_Y = 188
 ICONS_Y = 224
 CHECK_H = 28
+STARTUP_Y = 318
 BUTTONS_Y = H - 46
 SIZES = [13, 14, 15, 16]
 R_FIELD = 80
@@ -53,6 +61,7 @@ R_NETWORK = 86
 R_INI = 87
 R_CANCEL = 88
 R_APPLY = 89
+R_DEFAULT = 90
 KUI_HEAD = """; kui.ini - the look of kui programs (lib/kui): [look] accent= a palette
 ; (emerald, sapphire, amethyst, amber, coral), font_size= the text's px.
 """
@@ -73,6 +82,12 @@ class SettingsPanel(Flyout):
         self.sound = cfg.sound
         self.network = cfg.network
         self.error = ""
+        self.program = system.own_path()     # what autorun.dat is to start
+        cut = self.program.rfind("/")
+        self.notify = (self.program[:cut] if cut >= 0 else ".") + "/notify"
+        self.default = autorun.is_default(system.read_bytes(autorun.AUTORUN), self.program) and \
+            autorun.notify_taken(self.notify)
+        self.outcome: Outcome = None         # what "Make the default shell" did
         self.lay_out()
 
     def lay_out(self) -> None:
@@ -91,6 +106,13 @@ class SettingsPanel(Flyout):
                   (R_NETWORK, "Сеть" if ru else "Network", self.network, ICONS_Y + 2 * CHECK_H)]
         for c in checks:
             self.rows.append(Row(Item(title=c[1]), c[0], CONTROLS, c[3], 200, CHECK_H, CheckBox(c[2])))
+        if not self.default:
+            room = W - CONTROLS - 18
+            title = "Сделать оболочкой по умолчанию" if ru else "Make the default shell"
+            if SANS.width(title) + 28 > room:
+                title = "По умолчанию" if ru else "Make default"
+            self.rows.append(Row(Item(title=title), R_DEFAULT, CONTROLS, STARTUP_Y, min(room, SANS.width(title) + 28), 30,
+                                 PushButton()))
         self.rows.append(Row(Item(title="nectar.ini"), R_INI, 6, BUTTONS_Y + 1, 112, 28, TextButton()))
         self.rows.append(Row(Item(title="Отмена" if ru else "Cancel"), R_CANCEL, W - 16 - 110 - 10 - 96, BUTTONS_Y, 96, 30, PushButton()))
         self.rows.append(Row(Item(title="Применить" if ru else "Apply"), R_APPLY, W - 16 - 110, BUTTONS_Y, 110, 30, PushButton(True)))
@@ -104,9 +126,13 @@ class SettingsPanel(Flyout):
             cv.text(SANS, LEFT, 40, note, TEXT_FAINT)
         names = [("Кнопка меню" if ru else "Menu button", FIELD_Y, 30), ("Акцент" if ru else "Accent", SWATCH_Y, 32),
                  ("Размер текста" if ru else "Text size", SIZE_Y, 28), ("Часы" if ru else "Clock", SECONDS_Y, CHECK_H),
-                 ("Значки" if ru else "Icons", ICONS_Y, CHECK_H)]
+                 ("Значки" if ru else "Icons", ICONS_Y, CHECK_H), ("Запуск" if ru else "Startup", STARTUP_Y, 30)]
         for n in names:
             cv.text(SANS, LEFT, middle(SANS, n[1], n[2]), n[0], TEXT_DIM)
+        if self.default:
+            glyphs.check(cv, CONTROLS + 2, STARTUP_Y + 7, 16, ACCENT)
+            text = "Запускается вместе с системой" if ru else "Starts with the system"
+            cv.text(SANS, CONTROLS + 26, middle(SANS, STARTUP_Y, 30), SANS.fit(text, W - CONTROLS - 44), TEXT_DIM)
         cv.fill(LEFT, BUTTONS_Y - 12, W - 2 * LEFT, 1, LINE_SOFT)
 
     # ---- what it does
@@ -131,6 +157,8 @@ class SettingsPanel(Flyout):
         elif r.kind == R_APPLY:
             self.apply()
             return "@close" if self.closing else ""
+        elif r.kind == R_DEFAULT:
+            return self.make_default()
         else:
             return ""
         self.lay_out()
@@ -152,6 +180,17 @@ class SettingsPanel(Flyout):
             self.edit.caret = self.field.caret_at(r, x)
             return True
         return False
+
+    def make_default(self) -> str:
+        """autorun.dat (and /sys/@notify) for this shell: "@default" - the shell
+        tells how it went - or "" with the error on the card."""
+        o = autorun.make_default(self.program, self.notify, self.russian)
+        if not o.ok:
+            self.error = o.error
+            return ""
+        self.outcome = o
+        self.closing = True
+        return "@default"
 
     def label(self) -> str:
         t = self.edit.text.strip()

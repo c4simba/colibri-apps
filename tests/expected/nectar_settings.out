@@ -10,12 +10,12 @@ clock True True
 emerald 14
 ['emerald', 'sapphire', 'amethyst', 'amber', 'coral'] 5 True True True
 widgets 0x7b0084 True 10584536
-card 400 350 400 376 376 Taskbar settings 17 emerald 14 False
+card 385 306 430 420 420 Taskbar settings 18 emerald 14 False
 chosen amber 15 False True True ['emerald', 'sapphire', 'amethyst', 'amber', 'coral']
 label 'St' St
 "; nectar.ini - the settings of Nectar, the desktop shell (see apps/nectar/nectar.ini\n; for all it can hold). [pinned]: the programs pinned to the bar,\n; title=program|parameters|icon; [history]: the Run panel's lines - the shell\n; writes them.\n\n[launcher]\nstart=St\n\n[bar]\nseconds=0\nmonitor=0\nsound=1\nnetwork=1\n"
 "; kui.ini - the look of kui programs (lib/kui): [look] accent= a palette\n; (emerald, sapphire, amethyst, amber, coral), font_size= the text's px.\n\n[look]\naccent=amber\nfont_size=15\n"
 empty label 'Go'
 cancel @close False
-drawn 12857242
+drawn 13746935
 unchanged False @close True Параметры панели

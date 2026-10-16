@@ -1,0 +1,57 @@
+"'Hello\\nWorld' -tI" -> 'Hello\nWorld' ' -tI' | 'Hello' ['World'] 'I' False False False False
+'"Error\\nGreat error!!!" -tdE' -> 'Error\nGreat error!!!' ' -tdE' | 'Error' ['Great error!!!'] 'E' True False False False
+'Simple notification' -> 'Simple notification' '' | '' ['Simple notification'] '' False False False False
+"'It\\'s here' -O" -> "It's here" ' -O' | '' ["It's here"] 'O' False False False False
+"'one\\ntwo\\nthree' -cW -S" -> 'one\ntwo\nthree' ' -cW -S' | '' ['one', 'two', 'three'] 'S' False True False False
+"'title only' -t" -> 'title only' ' -t' | 'title only' [] '' False False False False
+"'' -I" -> '' ' -I' | '' [] 'I' False False False True
+'' -> '' '' | '' [] '' False False False True
+"'no end" -> 'no end' '' | '' ['no end'] '' False False False False
+'"a \'b\' \\"c\\"" -dc' -> 'a \'b\' "c"' ' -dc' | '' ['a \'b\' "c"'] '' True False False False
+"'  spaced  \\n\\n' -tp" -> '  spaced  \n\n' ' -tp' | 'spaced' [] '' False False True False
+'plain\\nlines -tI' -> 'plain\nlines -tI' '' | '' ['plain', 'lines -tI'] '' False False False False
+flags ' -tI' ''
+cp866 'Привет' ['мир'] 'I' False False False
+marked "'x' -tI #" True
+marked '"y" -E #' True
+marked "'plain text' #" True
+marked "'it\\'s' #" True
+marked "'x' -tI # #" True
+kept 30 t32 t3 30
+unread 28 29 t30
+read 0
+cleared 0 0
+['The quick brown fox', 'jumps over the lazy', 'dog']
+['Supercalifr', 'agilisticex', 'pialidociou', 's word']
+['two spaces'] []
+['a b c d e f g h i j k l m n o p', 'q r s t u v w x y z a b c d e f', 'g h i j k l m n o p q r s t u v', 'w x y z a b c d e f g h i j k l…']
+'Привет, м…' 'x…'
+tints ['0x8a63f2', '0xe5534b', '0xe5b54b', '0x3dc47e', '0x2cc9a2', '0x3ba7e8', '0xe0a94f', '0x8a63f2', '0x3ba7e8', '0x2cc9a2', '0x2cc9a2', '0x2cc9a2']
+toast 340 66 60 248 15 1 600 7367239
+toast 340 64 16 292 23 1 600 2864462
+toast 340 66 60 248 15 1 0 3729930
+toast 340 117 60 264 15 4 600 15979568
+toast 340 117 60 248 15 4 1000 1080507
+width 340
+['1 новое уведомление', '2 новых уведомления', '5 новых уведомлений', '11 новых уведомлений', '12 новых уведомлений', '21 новое уведомление', '22 новых уведомления', '25 новых уведомлений', '101 новое уведомление', '111 новых уведомлений'] 1 new notification 4 new notifications
+bell 0 0 'No notifications' 'Нет уведомлений' 719872
+bell 1 0 'Notifications: 1' 'Уведомления: 1' 12274464
+bell 2 3 '3 new notifications' '3 новых уведомления' 11949833
+bell 3 12 '12 new notifications' '12 новых уведомлений' 1348600
+heights [48, 85, 53, 85, 53, 85, 53, 85]
+panel 650 210 360 516 Notifications [True, True, True, True, True, True, True, False] 0 [(0, 50, 48), (1, 106, 85), (2, 199, 53), (3, 260, 85), (4, 353, 53)] [(70, 318, 58), (70, 318, 114), (70, 318, 207), (70, 318, 268), (70, 318, 361), (71, 192, 478)]
+drawn 2720758
+dismiss  7 Note 5 [(0, 50, 48), (1, 106, 53), (2, 167, 85), (3, 260, 53), (4, 321, 85), (5, 414, 53)]
+scroll True 2 [(2, 50, 85), (3, 143, 53), (4, 204, 85), (5, 297, 53), (6, 358, 85)] True 0 True 1 True 2 True 1
+arrived True 0 0 (0, 50, 53)
+by arrival ['s4', 's3', 's2', 's1']
+clear @close 0
+empty 166 Уведомления 0 False 1941744
+glyphs 41649
+b'# Syntaxis is: <Program_Name> <Parameter(s)> <Delay_Time>\r\n#/SYS/DEVELOP/BOARD     ""   0\t# Load DEBUG board\r\n/SYS/SETUP              BOOT 0\t# Load device settings\r\n/hd0/1/nectar           ""   0\t# Nectar: the taskbar, the launcher, the desktop\'s icons, notifications\r\n/SYS/ESKIN              ""   0\t# Set style\r\n/SYS/@VOLUME            ""   0\t# \xa3\xe0\xae\xac\xaa\xae\xe1\xe2\xec\r\n### Hello, ASM World! ###\r\n'
+again True True False False
+replaced ['@TASKBAR', '@ICON', '@DOCKY'] []
+b'# Syntaxis is: <Program_Name> <Parameter(s)> <Delay_Time>\r\n#/SYS/DEVELOP/BOARD     ""   0\t# Load DEBUG board\r\n/SYS/SETUP              BOOT 0\t# Load device settings\r\n/usbhd0/1/apps/Nectar   ""   0\t# Nectar: the taskbar, the launcher, the desktop\'s icons, notifications\r\n/SYS/ESKIN              ""   0\t# Set style\r\n/SYS/@VOLUME            ""   0\t# \xa3\xe0\xae\xac\xaa\xae\xe1\xe2\xec\r\n### Hello, ASM World! ###\r\n'
+b'/SYS/SETUP BOOT 0\n/SYS/@VOLUME "" 0\n/hd0/1/nectar           ""   0\t# Nectar: the taskbar, the launcher, the desktop\'s icons, notifications\n\n# the end\n'
+b'/hd0/1/a-very-long-folder-name/nectar ""   0\t# Nectar: the taskbar, the launcher, the desktop\'s icons, notifications\n'
+[b'', b'', b'', b'/SYS/@ICON', b'/sys/x']

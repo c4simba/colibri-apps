@@ -1,5 +1,5 @@
-# kui - a UI toolkit for KolibriOS programs written in MiniPy, compiled
-# (minipy --compile --target kolibri) or in the interpreter. Two levels:
+# kui - a UI toolkit for KolibriOS programs written in PlainPy, compiled
+# (plainpy --compile --target kolibri) or in the interpreter. Two levels:
 #
 #   window     a window described with decorators: a paint function,
 #              buttons, keys, clicks, the wheel (kui exports Window, window;

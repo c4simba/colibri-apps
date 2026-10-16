@@ -31,6 +31,16 @@ def start(run: str, args: str = "") -> bool:
         return True
     return k.run_program("/sys/@open", path) >= 0
 
+def own_path() -> str:
+    """The program's path as autorun.dat wants it: the kernel may give it with
+    the path's encoding (a byte 1..3) after its first "/" ("/\x03/hd0/1/nectar")."""
+    path = sys.argv[0]
+    if len(path) > 1 and path[0] == "/" and ord(path[1]) < 32:
+        return path[2:]
+    if len(path) > 0 and ord(path[0]) < 32:
+        return path[1:]
+    return path
+
 def program_dir() -> str:
     path = sys.argv[0]
     cut = path.rfind("/")

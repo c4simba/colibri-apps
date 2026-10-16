@@ -1,5 +1,5 @@
-# kgfx - 32-bit graphics for KolibriOS windows, in MiniPy.
-# Works compiled (minipy --compile --target kolibri) and in the interpreter;
+# kgfx - 32-bit graphics for KolibriOS windows, in PlainPy.
+# Works compiled (plainpy --compile --target kolibri) and in the interpreter;
 # everything but Canvas.blit / Canvas.grab also runs on any other system
 # (Canvas.save_bmp writes a picture to look at).
 #

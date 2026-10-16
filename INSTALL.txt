@@ -1,10 +1,14 @@
-Programs for KolibriOS written in MiniPy on kui
+Programs for KolibriOS written in PlainPy on kui
 https://github.com/c4simba/nectar
 
   nectar      Nectar, a desktop: the taskbar with its launcher, the
-              notification area and its flyouts, the desktop's shortcuts.
-              It takes the place of @TASKBAR, @MENU and @ICON (and ends
-              them when it starts).
+              notification area and its flyouts, the desktop's shortcuts,
+              the notifications (toasts that sink into the bell by the
+              clock). It takes the place of @TASKBAR, @MENU and @ICON (and
+              ends them when it starts).
+  notify      the notifications' part of Nectar: keep it next to nectar.
+              Started as @notify is (notify "'Title\nText' -tI"), it hands
+              the notification to Nectar.
   nectar.ini  its settings - the labels, the launcher's places, the bar's
               icons, the pinned programs. Keep it next to nectar (or in
               /sys/settings); nectar writes its changes there.
@@ -14,18 +18,28 @@ https://github.com/c4simba/nectar
 
 To try Nectar, start nectar (from Eolite, say) - it replaces the taskbar
 until the next boot. To keep it, put the folder on a disk that stays (here
-/hd0/1) and, in /sys/settings/autorun.dat, make the line of /SYS/@TASKBAR
+/hd0/1), start nectar from there and in Taskbar Settings (the bar's right
+button) press Startup's "Make the default shell": autorun.dat then starts
+it in the place of /SYS/@TASKBAR (the lines of @ICON and @DOCKY go), and
+/sys/@notify becomes a stub of a hundred bytes that passes the system's
+notifications to Nectar (the system's notifier is kept as /sys/notify3).
+On a system that boots from a floppy or an image (/sys is the RAM disk
+/rd/1) RDSAVE opens to save the image - do, or it lasts until the next boot.
+By hand: in /sys/settings/autorun.dat, make the line of /SYS/@TASKBAR
 
     /hd0/1/nectar           ""    0   # Start taskbar
 
-(the line of /SYS/@ICON can go). On a system that boots from a floppy or
-an image (/sys is the RAM disk /rd/1), save the image afterwards (RDSAVE).
+(the line of /SYS/@ICON can go) and save the image (RDSAVE).
 
 The launcher alone: Menu=/hd0/1/startmenu in /sys/settings/taskbar.ini
 (or startmenu copied over /sys/@MENU).
 
-Программы для KolibriOS на MiniPy и kui. Nectar - рабочий стол: панель
-задач с меню, область уведомлений, значки рабочего стола; заменяет
-@TASKBAR, @MENU и @ICON. Чтобы он запускался при загрузке, замените в
-/sys/settings/autorun.dat строку /SYS/@TASKBAR путём к nectar (см. выше)
-и сохраните образ (RDSAVE), если система загружена с дискеты или образа.
+Программы для KolibriOS на PlainPy и kui. Nectar - рабочий стол: панель
+задач с меню, область уведомлений, значки рабочего стола, уведомления
+(всплывают над панелью и уходят в колокольчик у часов); заменяет
+@TASKBAR, @MENU и @ICON. notify держите рядом с nectar. Чтобы Nectar
+запускался при загрузке, в "Параметрах панели" (правая кнопка на панели)
+нажмите "Сделать оболочкой по умолчанию": autorun.dat запустит
+его вместо @TASKBAR (строки @ICON и @DOCKY уйдут), уведомления программ
+придут в Nectar; затем сохраните образ в открывшемся RDSAVE, если система
+загружена с дискеты или образа.
