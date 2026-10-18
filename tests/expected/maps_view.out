@@ -41,3 +41,11 @@ layers 0 19 (158, 179, 150, 34) 10 11 5
 photos 1 18 True EOxCloudless https://cloudless.eox.at by EOX IT Servic…
 photos drawn 18 4 945184843
 round again 0 18 © OpenStreetMap contributors
+want W1 5 10 20;1 5 11 20 [(1, 5, 10, 20), (1, 5, 11, 20)] 0
+at most 48
+places 3 ['Москва', 'Красная площадь', 'a b c'] ['55.4913', '56.0094', '37.2905', '37.9674'] [] 1.5
+reply T 1 12 0 2476 1280 112233 445566 '' []
+reply E 0 3 1 7 2 'HTTP 404 Not Found' []
+reply P 0 0 0 0 0 '55.7505412	37.617478' ['Москва']
+reply F 0 0 0 0 0 'timeout' []
+emptied 8 0 0

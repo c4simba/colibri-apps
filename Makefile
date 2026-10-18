@@ -6,7 +6,8 @@
 #   make                 every program, for KolibriOS: build/kolibrios/<name>
 #   make nectar          one of them: nectar, startmenu, notify, counter, files, maps
 #   make test            the tests, compiled for this machine (TARGET=interp: in the interpreter)
-#   make dist            build/kolibrios-apps.zip: the programs, nectar.ini, how to install them
+#   make dist            build/kolibrios-apps.zip: the programs, nectar.ini, how to install them;
+#                        build/release: a zip of each program with what it needs, the files one by one
 #   make run             KolibriOS in QEMU, build/kolibrios as its /hd0/1 (tools/run-kolibrios.sh)
 #
 #   PLAINPY=path/plainpy FASM=path/fasm other ones than those on the PATH
@@ -59,18 +60,27 @@ tls: $(CACERT)
 test:
 	PLAINPY="$(PLAINPY)" FASM="$(FASM)" TARGET="$(TARGET)" sh tests/run_tests.sh
 
-# the zip of a release (and its files one by one in build/release, as the
-# release carries them too)
+# what a release carries (build/release): kolibrios-apps.zip - every program;
+# a zip of each program - a folder of its name with the program, what it needs
+# next to it and INSTALL.txt -; and the files one by one
 DIST = $(BUILD)/dist/kolibrios-apps
+ZIPS = nectar maps startmenu files counter
+ZIP_nectar    = nectar notify nectar.ini
+ZIP_maps      = maps cacert.pem $(if $(MBEDTLS),mbedtls.obj)
+ZIP_startmenu = startmenu
+ZIP_files     = files
+ZIP_counter   = counter
 dist: all $(CACERT)
-	rm -rf $(DIST) $(BUILD)/release
+	rm -rf $(DIST) $(BUILD)/release $(BUILD)/zips
 	mkdir -p $(DIST) $(BUILD)/release
 	cp $(addprefix $(OUT)/,$(APPS)) apps/nectar/nectar.ini INSTALL.txt $(CACERT) $(DIST)/
 	$(if $(MBEDTLS),cp $(MBEDTLS) $(DIST)/)
 	cd $(BUILD)/dist && rm -f ../kolibrios-apps.zip && zip -qr ../kolibrios-apps.zip kolibrios-apps
+	$(foreach z,$(ZIPS),mkdir -p $(BUILD)/zips/$(z) && cp $(addprefix $(DIST)/,$(ZIP_$(z)) INSTALL.txt) $(BUILD)/zips/$(z)/ && \
+		(cd $(BUILD)/zips && zip -qr ../release/$(z).zip $(z)) && ) true
 	cp $(BUILD)/kolibrios-apps.zip $(addprefix $(OUT)/,$(APPS)) apps/nectar/nectar.ini $(CACERT) $(BUILD)/release/
-	$(if $(MBEDTLS),cp $(MBEDTLS) $(BUILD)/release/)
-	@echo "built $(BUILD)/kolibrios-apps.zip"
+	$(if $(MBEDTLS),cp $(MBEDTLS) $(BUILD)/release/,@echo "no MBEDTLS=path/mbedtls.obj: maps.zip goes without it (maps needs it next to it)")
+	@echo "built $(BUILD)/kolibrios-apps.zip and $(addsuffix .zip,$(ZIPS)) in $(BUILD)/release"
 
 run: all tls
 	sh tools/run-kolibrios.sh $(OUT)

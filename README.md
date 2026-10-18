@@ -14,18 +14,21 @@ how to install it: **[c4simba.github.io/colibri-apps](https://c4simba.github.io/
 
 ## Download
 
-The [latest release](../../releases/latest) - every program is one file to
-put anywhere on a KolibriOS disk:
+The [latest release](../../releases/latest) - a zip of each program: a
+folder of its name with the program, what it needs next to it and
+[INSTALL.txt](INSTALL.txt), to put anywhere on a KolibriOS disk:
 
 | | |
 |---|---|
-| [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them, `nectar.ini` and [INSTALL.txt](INSTALL.txt) |
-| [nectar](../../releases/latest/download/nectar) + [nectar.ini](../../releases/latest/download/nectar.ini) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`) and its settings |
-| [notify](../../releases/latest/download/notify) | Nectar's notifications: the toasts' windows and what `@notify` hands them over with - keep it next to `nectar` |
-| [startmenu](../../releases/latest/download/startmenu) | Nectar's launcher alone, for the stock `@TASKBAR` |
-| [maps](../../releases/latest/download/maps) + [mbedtls.obj](../../releases/latest/download/mbedtls.obj) + [cacert.pem](../../releases/latest/download/cacert.pem) | a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: keep the three together |
-| [files](../../releases/latest/download/files) | a small file browser |
-| [counter](../../releases/latest/download/counter) | the smallest kui program |
+| [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them in one folder |
+| [nectar.zip](../../releases/latest/download/nectar.zip) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`): `nectar`, `notify` (the toasts' windows and what `@notify` hands them over with) and `nectar.ini` (its settings) |
+| [maps.zip](../../releases/latest/download/maps.zip) | Maps: a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: `maps`, `mbedtls.obj` (plainpy's TLS) and `cacert.pem` (the certificate authorities) |
+| [startmenu.zip](../../releases/latest/download/startmenu.zip) | Nectar's launcher alone, for the stock `@TASKBAR` |
+| [files.zip](../../releases/latest/download/files.zip) | a small file browser |
+| [counter.zip](../../releases/latest/download/counter.zip) | the smallest kui program |
+
+(The release has every file on its own too: `nectar`, `notify`, `nectar.ini`,
+`maps`, `mbedtls.obj`, `cacert.pem`, `startmenu`, `files`, `counter`.)
 
 To try Nectar, start `nectar` (from Eolite, say): it replaces the taskbar
 until the next boot. To keep it, put it (with `nectar.ini` and `notify`) on a
@@ -249,16 +252,20 @@ and the credits the licences ask for are at the bottom.
 needs, next to it, `mbedtls.obj` (plainpy's TLS library for KolibriOS; also
 `/sys/lib` or `/kolibrios/lib`) and `cacert.pem` (the authorities the
 servers' certificates are checked by: curl.se's; also `/sys/settings` or
-`/kolibrios/etc`) - the release has both - and the network up.
+`/kolibrios/etc`) - `maps.zip` has both - and the network up.
 
-How it works: a KolibriOS thread cannot wait for the network and for its
-window at once, and compiled programs have no threads, so the tiles come one
-at a time between events - `kui.window`'s idle function: a frame is drawn
-when no event waits, then the tile nearest the middle that is not there yet
-is fetched and decoded (in QEMU without KVM a fifth of a second for a
-map's PNG, about twice that for a photo's JPEG), and so on; none while the
-map is held by the mouse, and three seconds later again when the network
-fails. A `requests.Session` per server keeps its connection open, so the
+How it works: the window never waits for the network. Compiled programs have
+no threads, so `maps` starts itself again as the fetcher (`maps --fetch <pid>
+<language>`, a process without a window; `osmmap/link.py`). After each frame
+the window tells it which tiles it wants, the nearest to the middle first -
+the list replaced as the map moves -, and the fetcher gets them over https,
+decodes them (in QEMU without KVM a fifth of a second for a map's PNG, about
+twice that for a photo's JPEG) and sends the pixels back, a tile a message:
+KolibriOS's IPC (fn 60) copies them into the window's area and wakes it
+(`kui.window`'s `on_ipc`). A drag, a click, the wheel are answered at once,
+the tiles are drawn as they come; the searches go the same way, and the
+fetcher pauses three seconds when the network fails and ends with the
+window. A `requests.Session` per server keeps its connection open, so the
 TLS handshake is made once. The map is drawn into one canvas the size of the
 window (`kgfx`, the tiles pasted row by row) and put on it in one call: a
 drag does not flicker. A tile not there yet shows a piece of a tile of a
@@ -268,7 +275,8 @@ first. Over the tiles, kui's cards: `SearchField`, `ListEntry`, `Tab`,
 `card`, the pin a `Stamp` of `glyphs.marker`. The package
 `apps/maps/osmmap/`: `geo` (Web Mercator), `tiles`, `places` (Nominatim's
 JSON read into a dataclass, as compiled code reads JSON), `net` (the https),
-`view` (the drawing, the layers, what is where).
+`link` (the fetcher and what it and the window say), `view` (the drawing,
+the layers, what is where).
 
 The tiles come from OpenStreetMap's tile servers (their
 [policy](https://operations.osmfoundation.org/policies/tiles/): a User-Agent
@@ -284,11 +292,11 @@ kui is a toolkit for KolibriOS programs written in PlainPy, compiled or in the
 interpreter (plainpy runs on KolibriOS too). It has two levels. `kui.window`
 (what `import kui` gives) describes a window with decorators - a paint
 function, buttons, keys (`on_key`, `on_key_code`, `on_any_key`), clicks,
-double clicks, drags and their end, the wheel, UTF-8 text, and `on_idle`: work
-done between events (a function that says when it wants to run again - at
-once, in n/100 s, or after the next event); `@window(..., sizable=True)` makes
-a window the user can resize and maximize, drawn in its client area's
-coordinates (`win.width` x `win.height`):
+double clicks, drags and their end, the wheel, IPC messages (`on_ipc`), UTF-8
+text, and `on_idle`: work done between events (a function that says when it
+wants to run again - at once, in n/100 s, or after the next event);
+`@window(..., sizable=True)` makes a window the user can resize and maximize,
+drawn in its client area's coordinates (`win.width` x `win.height`):
 
 ```python
 from kui import Window, window
@@ -316,8 +324,8 @@ counter.run()
 (`apps/counter/counter.py` in full; `apps/files/files.py`: a list with
 keyboard, mouse and wheel navigation and a panel with the entry's size,
 dates, attributes and the first lines - or bytes - of a file; and
-`apps/maps/maps.py`: a sizable window, drags, the wheel and the network
-between events.) Everything
+`apps/maps/maps.py`: a sizable window, drags, the wheel, a process of its own
+for the network, talked to by IPC.) Everything
 else in kui is a drawn level, the one Nectar is made of. The interface is made of `lib/kui`, a toolkit for such programs. Every
 panel draws itself - its background, then each row through the widget the row
 carries (a menu item, a tab, a slider, the clock ...), so a new kind of row
@@ -417,7 +425,7 @@ make                    # the programs for KolibriOS: build/kolibrios/nectar, st
 make nectar             # one of them
 make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
-make dist               # build/kolibrios-apps.zip (and its files one by one in build/release)
+make dist               # build/release: kolibrios-apps.zip, a zip of each program, the files one by one
 make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/run-kolibrios.sh)
 ```
 
@@ -426,7 +434,8 @@ make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/ru
 `cacert.pem` (curl.se's, downloaded into `build/`) and - with
 `MBEDTLS=path/mbedtls.obj` - plainpy's TLS library for KolibriOS (in plainpy's
 KolibriOS zip, or made by its `make kolibri-tls`); the release workflow takes
-it from plainpy's latest release when that has it.
+it from plainpy's latest release - or, while that has none, makes it from
+plainpy's sources (LLVM 15).
 The programs are compiled with `lib/` on the module path
 (`PLAINPYPATH=lib plainpy --compile --target kolibri apps/nectar/desktop.py`).
 

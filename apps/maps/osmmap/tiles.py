@@ -9,10 +9,12 @@
 # zoom that covers it, enlarged (zooming in), or its four tiles of the next
 # zoom made smaller (zooming out) - whatever of them is in memory.
 #
-# How a tile is got is not this module's business: Tiles is given a fetch
-# function (osmmap.net's: https from OpenStreetMap, from EOX) that returns
-# the picture's bytes or raises FetchError. A layer of the map has Tiles of
-# its own.
+# How a tile is got is not this module's business: the tiles wanted are
+# given to the fetcher (osmmap.link: another process), and what it sends
+# back is put in (put, refused) - or, without one, Tiles gets them itself
+# with a fetch function (osmmap.net's: https from OpenStreetMap, from EOX)
+# that returns the picture's bytes or raises FetchError (load_next). A layer
+# of the map has Tiles of its own.
 import sys
 import png
 import jpeg
@@ -94,6 +96,33 @@ class Tiles:
 
     def pending(self) -> int:
         return len(self.wanted)
+
+    def wanted_tiles(self) -> list[tuple[int, int, int]]:
+        """The tiles wanted, in order: (zoom, column, row)."""
+        out: list[tuple[int, int, int]] = []
+        for t in self.wanted:
+            out.append((t.z, t.x, t.y))
+        return out
+
+    def put(self, z: int, x: int, y: int, pixels: buffer) -> None:
+        """A tile's picture that came."""
+        name = key(z, x, y)
+        t = self.cache.get(name)
+        if t is None:
+            t = Tile(z, x, y)
+            t.used = self.frame
+            self.cache[name] = t
+        t.pixels = pixels
+        t.preview = False
+        t.state = READY
+        self.error = ""
+
+    def refused(self, z: int, x: int, y: int, why: str, lasting: bool) -> None:
+        """A tile not got: why; lasting - not to be asked for again."""
+        self.error = why
+        t = self.cache.get(key(z, x, y))
+        if lasting and t is not None:
+            t.state = FAILED
 
     def evict(self) -> None:
         """Forget the tiles longest out of sight, down to the limit."""

@@ -14,6 +14,9 @@
 #   net       https: the map's tiles, the photos, the search - a kept-open
 #             connection to each server, what went wrong in a few words, the
 #             credits the licences ask for
+#   link      the fetcher: the program run again as a process of its own that
+#             does the waiting (https, decoding) and sends the window decoded
+#             tiles and places by IPC; the messages; the window's side of it
 #   view      the window drawn: the tiles, the pin, the cards (the search and
 #             the places found, the zoom, the layers, the scale, the credit,
 #             the trouble); what is at a point; Layer: a kind of map

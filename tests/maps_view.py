@@ -5,7 +5,9 @@
 # nonsense), previews from the zooms next to a tile, the ones longest out of
 # sight forgotten - and the window drawn: the canvas's checksums and what is
 # at its points, a zoom round a point, a drag round the world, the places
-# found, the other layer (its deepest zoom, its credit).
+# found, the other layer (its deepest zoom, its credit) - and what the window
+# and its fetcher say to each other (osmmap.link): the tiles wanted, places
+# as text, an IPC area filled as the kernel fills it, read.
 import sys
 import zlib
 from osmmap import geo
@@ -13,6 +15,7 @@ from osmmap import places
 from osmmap.places import Place
 from osmmap.tiles import Tiles, FetchError, enlarged, shrunk, key, IDLE, LOADED, OFFLINE, READY, FAILED, WANTED
 from osmmap.view import MapView, Layer, AT_MAP, AT_FIELD, AT_ZOOM_IN, AT_ZOOM_OUT, AT_CARD, AT_LAYERS, AT_LAYER, AT_PLACE
+from osmmap import link
 from kgfx import Canvas
 
 def be32(v: int) -> bytes:
@@ -204,3 +207,40 @@ view.render()
 print("photos drawn", view.zoom, n, checksum(view.cv))
 view.use_layer(2)
 print("round again", view.layer, view.zoom, view.credit())
+
+# ---- the window and its fetcher
+w = link.want_message(1, [(5, 10, 20), (5, 11, 20)])
+print("want", w, link.parse_want(w), len(link.parse_want("W")))
+many: list[tuple[int, int, int]] = []
+for i in range(60):
+    many.append((9, i, 7))
+print("at most", len(link.parse_want(link.want_message(0, many))))
+text = link.places_text([moscow, house, Place("1.5", "2.5", "a\tb\nc, d", ["1", "2", "3", "4"])])
+back = link.parse_places(text)
+print("places", len(back), [places.title(p) for p in back], back[0].boundingbox, back[1].boundingbox, back[2].lat)
+
+def deliver(area: buffer, pid: int, b: buffer) -> None:
+    """A message put in an IPC area as the kernel puts it: pid, length, the bytes."""
+    used = sys.peek(area, 4, 4)
+    sys.poke(area, used, pid, 4)
+    sys.poke(area, used + 4, len(b), 4)
+    sys.poke_bytes(area, used + 8, sys.peek_bytes(b, 0, len(b)))
+    sys.poke(area, 4, used + 8 + len(b), 4)
+
+area = sys.buffer(link.AREA)
+sys.poke(area, 4, 8, 4)
+pixels = sys.buffer(256 * 256 * 4)
+sys.poke(pixels, 0, 0x112233, 4)
+sys.poke(pixels, 256 * 256 * 4 - 4, 0x445566, 4)
+tile = link.message("T", 1, 12, 0, 2476, 1280, 256 * 256 * 4)
+sys.poke_bytes(tile, link.HEAD, sys.peek_bytes(pixels, 0, 256 * 256 * 4))
+deliver(area, 77, tile)
+deliver(area, 77, link.text_message("E", 0, 3, 1, 7, 2, "HTTP 404 Not Found"))
+deliver(area, 77, link.text_message("P", 0, 0, 0, 0, 0, link.places_text([moscow])))
+deliver(area, 77, link.text_message("F", 0, 0, 0, 0, 0, "timeout"))
+for r in link.read_replies(area):
+    line = r.kind + " " + str(r.layer) + " " + str(r.z) + " " + str(r.flag) + " " + str(r.x) + " " + str(r.y)
+    if r.pixels is not None:
+        line += " " + hx(sys.peek(r.pixels, 0, 4)) + " " + hx(sys.peek(r.pixels, 256 * 256 * 4 - 4, 4))
+    print("reply", line, "'" + r.text[:20] + "'", [places.title(p) for p in r.places])
+print("emptied", sys.peek(area, 4, 4), sys.peek(area, 0, 4), len(link.read_replies(area)))

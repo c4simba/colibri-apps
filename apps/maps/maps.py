@@ -20,13 +20,17 @@
 # of that name - the first is shown at once, Up and Down (or a click) go to
 # the others -, Esc closes the list, then leaves the field.
 #
-# A KolibriOS thread cannot wait for the network and the window at once, so
-# the tiles come one at a time between events (an idle function of the
-# window): a frame is drawn when nothing else waits, then the nearest tile
-# not there is fetched and decoded (in QEMU without KVM a fifth of a second
-# for a map's PNG, about twice that for a photo's JPEG), and so on - the
-# window answers between tiles. While the map is held by the mouse none is
-# fetched; when the network fails the map tries again three seconds later.
+# The window never waits for the network: compiled programs have no threads,
+# so the program starts itself again as the fetcher (maps --fetch <pid>
+# <language>, a process without a window: osmmap.link). After each frame the
+# window tells it which tiles it wants, the nearest to the middle first; the
+# fetcher gets them over https, decodes them (in QEMU without KVM a fifth of
+# a second for a map's PNG, about twice that for a photo's JPEG) and sends
+# the pixels back (IPC), one tile a message; the window draws what came
+# whenever it comes - a drag, a click, the wheel are answered at once. The
+# searches go the same way. When the network fails the fetcher tries again
+# three seconds later. (Where the fetcher cannot be started - the
+# interpreter - the window gets the tiles itself between events.)
 import sys
 import kolibri as k
 from kui import Window, window
@@ -34,12 +38,18 @@ from kui.textinput import typed
 from osmmap.tiles import Tiles, OFFLINE
 from osmmap.view import MapView, Layer, AT_MAP, AT_FIELD, AT_ZOOM_IN, AT_ZOOM_OUT, AT_LAYER, AT_PLACE
 from osmmap.net import Net, SearchError, ca_found, TILES_CREDIT, PHOTOS_CREDIT
+from osmmap import link
+
+if len(sys.argv) > 2 and sys.argv[1] == "--fetch":
+    link.serve(int(sys.argv[2]), sys.argv[3] if len(sys.argv) > 3 else "en")
+    sys.exit(0)
 
 RETRY = 300                # 1/100 s before the network is tried again
 STEP = 96                  # pixels the arrows move the map by
 
 russian = k.system_language() == k.LANG_RU
-net = Net("ru" if russian else "en")
+language = "ru" if russian else "en"
+net = Net(language)                # (used here only without a fetcher)
 view = MapView([Layer("Схема", "Map", 19, TILES_CREDIT, Tiles(net.tile)),
                 Layer("Снимки", "Satellite", 18, PHOTOS_CREDIT, Tiles(net.photo))], russian)
 dirty = True               # the window shows what was; draw it again
@@ -52,6 +62,7 @@ can_fetch = ca_found()
 if not can_fetch:
     view.trouble = ("Нет cacert.pem: положите его рядом с программой или в /sys/settings" if russian
                     else "No cacert.pem: put one next to the program or in /sys/settings")
+fetcher = link.Fetcher(language, can_fetch)
 
 def opening() -> None:
     """Where the map opens: the parameters' latitude, longitude and zoom."""
@@ -94,6 +105,9 @@ def search() -> None:
         changed()
         return
     query = text
+    if fetcher.running():
+        fetcher.search(text)
+        query = ""
     view.results = []
     view.listing = False
     view.note = ("Ищу «" + text + "»...") if russian else ("Searching for \"" + text + "\"...")
@@ -228,13 +242,50 @@ def wheel(steps: int) -> None:
     view.zoom_to(view.zoom - steps, at[0], at[1])
     changed()
 
-# ---- between events: draw, search, fetch
+# ---- what the fetcher sends
+def offline_text(why: str) -> str:
+    return ("Нет связи с сервером карт: " if russian else "The map's server cannot be reached: ") + why
+
+@maps.on_ipc
+def came() -> None:
+    global searched
+    for r in fetcher.replies():
+        if r.layer >= len(view.layers):
+            continue
+        tiles = view.layers[r.layer].tiles
+        if r.kind == "T":
+            tiles.put(r.z, r.x, r.y, r.pixels)
+            view.trouble = ""
+        elif r.kind == "E":
+            tiles.refused(r.z, r.x, r.y, r.text, r.flag == 1)
+            view.trouble = r.text if r.flag == 1 else offline_text(r.text)
+        elif r.kind == "P":
+            view.show_places(r.places)
+            view.choose(0)
+        elif r.kind == "F":
+            view.results = []
+            view.listing = False
+            view.note = ("Поиск не удался: " if russian else "The search failed: ") + r.text
+            view.note_bad = True
+    changed()
+
+# ---- between events: draw, tell the fetcher (or fetch here)
 @maps.on_idle
 def work() -> int:
-    global retry_at
     if dirty:
         show()
+        if fetcher.running():
+            fetcher.want(view.layer, view.tiles.wanted_tiles())
         return 0
+    if fetcher.running():
+        if fetcher.waiting() and not fetcher.flush():
+            return 5                         # (it is not ready yet: soon again)
+        return -1
+    return work_here()
+
+def work_here() -> int:
+    """No fetcher: the search and the tiles got here, one at a time."""
+    global retry_at
     if query != "":
         run_search()
         changed()
@@ -249,11 +300,9 @@ def work() -> int:
     view.trouble = tiles.error
     if got == OFFLINE:
         retry_at = now + RETRY
-        if russian:
-            view.trouble = "Нет связи с сервером карт: " + tiles.error
-        else:
-            view.trouble = "The map's server cannot be reached: " + tiles.error
+        view.trouble = offline_text(tiles.error)
     changed()
     return 0
 
 maps.run()
+fetcher.stop()

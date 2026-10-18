@@ -511,8 +511,8 @@ counter.run()</pre>
         <div class="screen"><img src="screenshots/earth.jpg" width="1024" height="768" loading="lazy" alt="The Earth from space, the window maximized"></div>
       </div>
       <div>
-        <h3>A kui window, the network between its events</h3>
-        <p style="margin:0;color:var(--ink-2)">Compiled programs have no threads, so the tiles come one at a time while no event waits — the nearest to the middle first, each a request on a connection kept open and a PNG or a JPEG decoded in PlainPy. The window answers between them; a tile not there yet shows a piece of a tile of the next zoom, enlarged.</p>
+        <h3>A kui window that never waits for the network</h3>
+        <p style="margin:0;color:var(--ink-2)">Compiled programs have no threads, so <code>maps</code> starts itself again as a fetcher without a window. The window tells it which tiles it wants, the nearest to the middle first; the fetcher gets them — a request each on a connection kept open — decodes the PNGs and JPEGs in PlainPy and sends the pixels back by KolibriOS's IPC. Drags and clicks are answered at once; a tile not there yet shows a piece of a tile of the next zoom, enlarged.</p>
         <div class="code" style="margin-top:16px">
           <div class="code-bar"><span class="file">apps/maps/osmmap/net.py</span><span>— a tile</span></div>
 <pre><span class="k">import</span> requests
@@ -531,7 +531,7 @@ w, h, pixels = png.decode(r.content)</pre>
             <tr><td>type · Enter</td><td>search; Up and Down go through the places found</td></tr>
           </tbody>
         </table>
-        <p style="margin:16px 0 0;color:var(--ink-2)">Keep <code>mbedtls.obj</code> (plainpy's TLS) and <code>cacert.pem</code> next to <code>maps</code> — the release has them.</p>
+        <p style="margin:16px 0 0;color:var(--ink-2)">Keep <code>mbedtls.obj</code> (plainpy's TLS) and <code>cacert.pem</code> next to <code>maps</code> — <code>maps.zip</code> has them.</p>
       </div>
     </div>
   </div>
@@ -541,9 +541,9 @@ w, h, pixels = png.decode(r.content)</pre>
   <div class="wrap">
     <p class="eyebrow">Install</p>
     <h2>Copy a folder, press one button.</h2>
-    <p class="section-lead">Everything is in one zip: the programs, <code>nectar.ini</code> and how to install them. Try it first — starting <code>nectar</code> replaces the taskbar until the next boot.</p>
+    <p class="section-lead">Everything is in one zip — or each program in a zip of its own, with what it needs next to it. Try it first — starting <code>nectar</code> replaces the taskbar until the next boot.</p>
     <ol class="steps">
-      <li><h3>Download</h3><p>The latest release's <a href="https://github.com/c4simba/colibri-apps/releases/latest/download/kolibrios-apps.zip"><code>kolibrios-apps.zip</code></a>, or the programs one by one below.</p></li>
+      <li><h3>Download</h3><p>The latest release's <a href="https://github.com/c4simba/colibri-apps/releases/latest/download/nectar.zip"><code>nectar.zip</code></a> (or <a href="https://github.com/c4simba/colibri-apps/releases/latest/download/kolibrios-apps.zip"><code>kolibrios-apps.zip</code></a>: every program), or another program's zip below.</p></li>
       <li><h3>Copy it to a disk that stays</h3><p>Unpack it onto a disk KolibriOS keeps across boots — <code>/hd0/1</code>, a USB stick — with <code>nectar</code>, <code>notify</code> and <code>nectar.ini</code> in one folder. (In QEMU: <code>make run</code> shows <code>build/kolibrios</code> as <code>/hd0/1</code>.)</p></li>
       <li><h3>Start <code>nectar</code></h3><p>From Eolite, say. It ends <code>@TASKBAR</code>, <code>@MENU</code> and <code>@ICON</code> and takes their place for this session.</p></li>
       <li><h3>Make it the default shell</h3><p>The bar's right button → <b>Taskbar Settings</b> → Startup → <b>Make the default shell</b>. Nectar rewrites <code>/sys/settings/autorun.dat</code> — its line where <code>@TASKBAR</code>'s was, the lines of <code>@ICON</code> and <code>@DOCKY</code> gone, every other byte as it was — and routes <code>@notify</code> to itself. A notification tells you what it did.</p></li>
@@ -552,15 +552,11 @@ w, h, pixels = png.decode(r.content)</pre>
 
     <div class="downloads">
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/kolibrios-apps.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>kolibrios-apps.zip</b>all of them, nectar.ini, INSTALL.txt</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/nectar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>nectar</b>the desktop</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/nectar.ini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>nectar.ini</b>its settings, next to nectar</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/notify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>notify</b>the toasts' windows, keep it next to nectar</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/startmenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>startmenu</b>the launcher alone, for the stock @TASKBAR</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>maps</b>a map of the world over https</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/mbedtls.obj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>mbedtls.obj</b>plainpy's TLS, next to maps</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/cacert.pem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>cacert.pem</b>certificate authorities, next to maps</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>files</b>a small file browser</span></a>
-      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/counter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>counter</b>the smallest kui program</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/nectar.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>nectar.zip</b>the desktop: nectar, notify, nectar.ini</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/maps.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>maps.zip</b>the map of the world, with its TLS files</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/startmenu.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>startmenu.zip</b>the launcher alone, for the stock @TASKBAR</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/files.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>files.zip</b>a small file browser</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/counter.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>counter.zip</b>the smallest kui program</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span><b>every release</b>older versions, release notes</span></a>
     </div>
 

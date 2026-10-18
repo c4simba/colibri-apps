@@ -20,6 +20,7 @@
 #   @counter.on_drag                           # the pointer moved, the left button held
 #   @counter.on_release                        # the left button let go (after a press inside)
 #   @counter.on_wheel                          # the wheel: steps, + is down
+#   @counter.on_ipc                            # an IPC message came (fn 60: the program's area)
 #   @counter.on_idle                           # no event waiting: work done between them
 #
 #   counter.run()                              # the event loop, until close()
@@ -75,6 +76,7 @@ class Window:
         self.drags: list[Callable[[int, int], None]] = []
         self.releases: list[Callable[[int, int], None]] = []
         self.wheels: list[Callable[[int], None]] = []
+        self.ipcs: list[Callable[[], None]] = []
         self.idlers: list[Callable[[], int]] = []
         self.held = False                    # the left button went down inside and is still down
         self.pressed_inside = False          # the last press was inside
@@ -129,6 +131,11 @@ class Window:
 
     def on_wheel(self, handler: Callable[[int], None]) -> Callable[[int], None]:
         self.wheels.append(handler)
+        return handler
+
+    def on_ipc(self, handler: Callable[[], None]) -> Callable[[], None]:
+        """IPC messages came into the area the program set (kolibri.set_ipc_area)."""
+        self.ipcs.append(handler)
         return handler
 
     def on_idle(self, handler: Callable[[], int]) -> Callable[[], int]:
@@ -232,8 +239,13 @@ class Window:
         return soonest
 
     def run(self) -> None:
+        mask = k.EVM_REDRAW | k.EVM_KEY | k.EVM_BUTTON
         if len(self.clicks) + len(self.double_clicks) + len(self.drags) + len(self.releases) + len(self.wheels) > 0:
-            k.set_event_mask(k.EVM_REDRAW | k.EVM_KEY | k.EVM_BUTTON | k.EVM_MOUSE | k.EVM_MOUSE_ACTIVE_ONLY)
+            mask |= k.EVM_MOUSE | k.EVM_MOUSE_ACTIVE_ONLY
+        if len(self.ipcs) > 0:
+            mask |= k.EVM_IPC
+        if mask != k.EVM_REDRAW | k.EVM_KEY | k.EVM_BUTTON:
+            k.set_event_mask(mask)
         self.redraw()
         wait = 0
         while self.running:
@@ -267,6 +279,9 @@ class Window:
                         b.handler()
             elif event == k.EV_MOUSE:
                 self.mouse()
+            elif event == k.EV_IPC:
+                for h in self.ipcs:
+                    h()
 
 def window(title: str, x: int, y: int, w: int, h: int, color: int = 0x223344, sizable: bool = False, fill: bool = True):
     """@window(...) over a paint function: the function becomes the Window."""

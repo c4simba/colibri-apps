@@ -1,13 +1,14 @@
 # Builds the programs for KolibriOS with plainpy, runs the tests (in the
 # interpreter and compiled) and - for a tag v1.2.3 - publishes the release
-# 1.2.3: kolibrios-apps.zip and every program on its own, under the same
-# names from release to release, so the latest is always at
+# 1.2.3: kolibrios-apps.zip, a zip of each program (nectar.zip, maps.zip ...:
+# the program and what it needs next to it) and every file on its own, under
+# the same names from release to release, so the latest is always at
 # https://github.com/<owner>/<repo>/releases/latest/download/<file>.
 name: build
 
 on:
   push:
-    branches: [main]
+    branches: [master, main]
     tags: ['v*']
   pull_request:
   workflow_dispatch:
@@ -47,17 +48,23 @@ jobs:
         run: make test TARGET=interp
       - name: Tests (compiled)
         run: make test
-      - name: plainpy's TLS for KolibriOS (mbedtls.obj, next to maps)
+      - name: plainpy's TLS for KolibriOS (mbedtls.obj, in maps.zip)
         env:
           GH_TOKEN: ${{ secrets.PLAINPY_TOKEN || github.token }}
         run: |
+          # plainpy's KolibriOS zip has it - or, while its release does not,
+          # plainpy's sources make it (make kolibri-tls: LLVM, the KolibriOS port of mbedTLS)
           if gh release download -R "$PLAINPY_REPO" -p plainpy-kolibrios.zip -D "$RUNNER_TEMP" &&
              unzip -j -o "$RUNNER_TEMP/plainpy-kolibrios.zip" '*mbedtls.obj' -d "$RUNNER_TEMP/tls"; then
             echo "MBEDTLS=$RUNNER_TEMP/tls/mbedtls.obj" >> "$GITHUB_ENV"
           else
-            echo "plainpy's release has no mbedtls.obj: the zip goes without it"
+            echo "plainpy's release has no mbedtls.obj: made from its sources"
+            sudo apt-get install -y clang-15 llvm-15
+            [ -d "$RUNNER_TEMP/plainpy-src" ] || gh repo clone "$PLAINPY_REPO" "$RUNNER_TEMP/plainpy-src" -- --depth 1
+            LLVM=/usr/lib/llvm-15/bin make -C "$RUNNER_TEMP/plainpy-src" kolibri-tls
+            echo "MBEDTLS=$RUNNER_TEMP/plainpy-src/build/kolibri/mbedtls.obj" >> "$GITHUB_ENV"
           fi
-      - name: The programs for KolibriOS
+      - name: The programs for KolibriOS (a zip of each, all of them in one)
         run: make dist
       - uses: actions/upload-artifact@v4
         with:
