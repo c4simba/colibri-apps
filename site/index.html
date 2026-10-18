@@ -410,12 +410,13 @@ counter.run()</pre>
         </div>
         <div class="sizes">
           <h3>What a release carries</h3>
-          <div class="size-row"><span class="name">nectar</span><span class="bar"><i style="width:100%"></i></span><span class="kb">158 KB</span></div>
-          <div class="size-row"><span class="name">startmenu</span><span class="bar"><i style="width:54.6%"></i></span><span class="kb">86 KB</span></div>
-          <div class="size-row"><span class="name">files</span><span class="bar"><i style="width:17.2%"></i></span><span class="kb">27 KB</span></div>
-          <div class="size-row"><span class="name">notify</span><span class="bar"><i style="width:13.8%"></i></span><span class="kb">22 KB</span></div>
-          <div class="size-row"><span class="name">counter</span><span class="bar"><i style="width:11.5%"></i></span><span class="kb">18 KB</span></div>
-          <p>Each is a single file compiled by plainpy: the whole desktop — its toolkit, its PNG decoder, every flyout — is the first of them.</p>
+          <div class="size-row"><span class="name">maps</span><span class="bar"><i style="width:100%"></i></span><span class="kb">175 KB</span></div>
+          <div class="size-row"><span class="name">nectar</span><span class="bar"><i style="width:90.7%"></i></span><span class="kb">158 KB</span></div>
+          <div class="size-row"><span class="name">startmenu</span><span class="bar"><i style="width:49.7%"></i></span><span class="kb">87 KB</span></div>
+          <div class="size-row"><span class="name">files</span><span class="bar"><i style="width:16.3%"></i></span><span class="kb">28 KB</span></div>
+          <div class="size-row"><span class="name">notify</span><span class="bar"><i style="width:12.5%"></i></span><span class="kb">22 KB</span></div>
+          <div class="size-row"><span class="name">counter</span><span class="bar"><i style="width:11.3%"></i></span><span class="kb">20 KB</span></div>
+          <p>Each is a single file compiled by plainpy: the whole desktop — its toolkit, its PNG decoder, every flyout — is one of them; maps carries an HTTP client, TLS's half in PlainPy and a JPEG decoder too.</p>
         </div>
       </div>
     </div>
@@ -499,6 +500,43 @@ counter.run()</pre>
   </div>
 </section>
 
+<section class="section" id="maps">
+  <div class="wrap">
+    <p class="eyebrow">Maps</p>
+    <h2>The world over https, <span class="sheen-text">on KolibriOS itself</span>.</h2>
+    <p class="section-lead">OpenStreetMap's map, or the Earth from space — EOxCloudless 2024, Sentinel-2's photos without the clouds — dragged with the mouse, zoomed with the wheel, and a search of places by name in the system's language. Every tile and every search comes over TLS from the internet: plainpy's <code>requests</code> and <code>ssl</code>, compiled into one KolibriOS program.</p>
+    <div class="split">
+      <div class="stack">
+        <div class="screen zoom"><img style="--f: 0% 0%; --z: 1.45" src="screenshots/search.jpg" width="1024" height="768" loading="lazy" alt="A search for Red Square: six places found, the first one shown with a pin"></div>
+        <div class="screen"><img src="screenshots/earth.jpg" width="1024" height="768" loading="lazy" alt="The Earth from space, the window maximized"></div>
+      </div>
+      <div>
+        <h3>A kui window, the network between its events</h3>
+        <p style="margin:0;color:var(--ink-2)">Compiled programs have no threads, so the tiles come one at a time while no event waits — the nearest to the middle first, each a request on a connection kept open and a PNG or a JPEG decoded in PlainPy. The window answers between them; a tile not there yet shows a piece of a tile of the next zoom, enlarged.</p>
+        <div class="code" style="margin-top:16px">
+          <div class="code-bar"><span class="file">apps/maps/osmmap/net.py</span><span>— a tile</span></div>
+<pre><span class="k">import</span> requests
+
+tiles = requests.Session()             <span class="c"># one TLS handshake, then a request a tile</span>
+tiles.headers[<span class="s">"User-Agent"</span>] = AGENT
+r = tiles.get(<span class="s">"https://tile.openstreetmap.org/12/2476/1280.png"</span>, timeout=<span class="s">20</span>)
+w, h, pixels = png.decode(r.content)</pre>
+        </div>
+        <table class="flags">
+          <thead><tr><th>Keys</th><th>What they do</th></tr></thead>
+          <tbody>
+            <tr><td>drag · wheel</td><td>move the map · zoom round the pointer</td></tr>
+            <tr><td>+ − · arrows</td><td>zoom · move</td></tr>
+            <tr><td>Tab</td><td>the map or the photos</td></tr>
+            <tr><td>type · Enter</td><td>search; Up and Down go through the places found</td></tr>
+          </tbody>
+        </table>
+        <p style="margin:16px 0 0;color:var(--ink-2)">Keep <code>mbedtls.obj</code> (plainpy's TLS) and <code>cacert.pem</code> next to <code>maps</code> — the release has them.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="section" id="install">
   <div class="wrap">
     <p class="eyebrow">Install</p>
@@ -518,6 +556,9 @@ counter.run()</pre>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/nectar.ini"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>nectar.ini</b>its settings, next to nectar</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/notify"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>notify</b>the toasts' windows, keep it next to nectar</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/startmenu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>startmenu</b>the launcher alone, for the stock @TASKBAR</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/maps"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>maps</b>a map of the world over https</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/mbedtls.obj"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>mbedtls.obj</b>plainpy's TLS, next to maps</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/cacert.pem"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>cacert.pem</b>certificate authorities, next to maps</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>files</b>a small file browser</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/counter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>counter</b>the smallest kui program</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg><span><b>every release</b>older versions, release notes</span></a>

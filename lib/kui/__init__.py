@@ -2,8 +2,9 @@
 # (plainpy --compile --target kolibri) or in the interpreter. Two levels:
 #
 #   window     a window described with decorators: a paint function,
-#              buttons, keys, clicks, the wheel (kui exports Window, window;
-#              apps/counter, apps/files)
+#              buttons, keys, clicks, drags, the wheel, work between events;
+#              fixed or sizable (kui exports Window, window; apps/counter,
+#              apps/files, apps/maps)
 #
 # and pieces drawn with kgfx in a look of their own - Nectar's graphite and
 # hummingbird's sheen - that apps/nectar, a whole desktop, is built of:
@@ -29,15 +30,18 @@
 #   tooltip    Tooltip
 #   dialog     a modal dialog: Backdrop (the dimmed screen), DialogBox (the
 #              card), ChoiceChip (a round choice)
-#   widgets    FadingSeparator, PushButton, TextButton, Tab, CheckBox, Swatch
+#   widgets    FadingSeparator, PushButton, TextButton, Tab, CheckBox, Swatch,
+#              ListEntry (a thing found: its name, and dim under it where it is)
 #   textinput  LineEdit (a line being typed: cp866 letters, the caret's
-#              keys), TextField (its field)
+#              keys), TextField (its field), SearchField (one with a magnifier)
 #   slider     Slider
 #   chart      chart: percents over time
 #   band       Band: a gradient kept as a color per row
 #   draw       helpers: centered and shadowed text, glow, highlight, a
-#              picture pasted with rounded corners
-#   glyphs     symbols drawn as strokes: power, restart, chevrons, arrows, a
-#              check mark, a network's bars, a speaker
+#              picture pasted with rounded corners, a card floating over a
+#              picture (card), a shape worked out once and laid down in any
+#              color (Stamp)
+#   glyphs     symbols drawn as strokes: power, restart, search, chevrons,
+#              arrows, a check mark, a network's bars, a speaker, a map's pin
 #   icons      Icons: the system's icon strips (ICONS18, ICONS32), never scaled
 from .window import Button, Window, window

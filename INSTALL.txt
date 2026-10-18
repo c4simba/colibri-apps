@@ -13,6 +13,12 @@ https://github.com/c4simba/nectar
               icons, the pinned programs. Keep it next to nectar (or in
               /sys/settings); nectar writes its changes there.
   startmenu   Nectar's launcher alone, for the stock @TASKBAR
+  maps        a map of the world over https: OpenStreetMap, the Earth from
+              space (EOxCloudless), a search of places. It needs, next to
+              it, mbedtls.obj (plainpy's TLS; or in /sys/lib) and
+              cacert.pem (the certificate authorities; or in
+              /sys/settings) - and the network up. maps LAT LON [ZOOM]
+              opens it there.
   files       a small file browser
   counter     the smallest kui program
 
@@ -43,3 +49,9 @@ The launcher alone: Menu=/hd0/1/startmenu in /sys/settings/taskbar.ini
 его вместо @TASKBAR (строки @ICON и @DOCKY уйдут), уведомления программ
 придут в Nectar; затем сохраните образ в открывшемся RDSAVE, если система
 загружена с дискеты или образа.
+
+maps - карта мира через https: OpenStreetMap, снимки Земли из космоса
+(EOxCloudless), поиск мест по названию. Рядом с ней держите mbedtls.obj
+(TLS для plainpy; можно в /sys/lib) и cacert.pem (сертификаты; можно в
+/sys/settings), сеть должна быть настроена. Мышь двигает карту, колесо
+меняет масштаб, Tab переключает схему и снимки, набранный текст ищет место.

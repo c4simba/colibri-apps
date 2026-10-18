@@ -15,6 +15,7 @@
 #   triangle(...)                                 small arrows
 #   shadow(x, y, w, h, size, strength)            a soft drop shadow of a rectangle
 #   image(img, x, y, alpha)                       an Image with its alpha channel
+#   paste(img, x, y)                              an Image as it is, opaque (fast: row by row)
 #   text(font, x, y, s, color)                    a Font's glyphs, by their coverage
 #   canvas(src, ...)                              copy part of another canvas
 #   blit(wx, wy, ...) / grab(sx, sy, ...)         to the window (fn 65) / from the screen (fn 36)
@@ -492,6 +493,20 @@ class Canvas:
                 a = (v >> 24) & 255
                 if a > 0:
                     self.blend(x + i, yy, v & 0xFFFFFF, a * alpha // 255)
+
+    def paste(self, img: Image, x: int, y: int) -> None:
+        """An opaque picture at (x, y) - the part of it inside the canvas -, row
+        by row with no blending: a photo, a map's tile. (Its alpha bytes come
+        along as the canvas's fourth bytes, which nothing reads.)"""
+        x0 = max(0, x)
+        x1 = min(self.w, x + img.w)
+        y0 = max(0, y)
+        y1 = min(self.h, y + img.h)
+        if x1 <= x0 or y1 <= y0:
+            return
+        n = (x1 - x0) * 4
+        for yy in range(y0, y1):
+            sys.poke_bytes(self.buf, (yy * self.w + x0) * 4, sys.peek_bytes(img.buf, ((yy - y) * img.w + x0 - x) * 4, n))
 
     def canvas(self, src: "Canvas", x: int, y: int, sx: int = 0, sy: int = 0, w: int = -1, h: int = -1) -> None:
         """Copy the part (sx, sy, w, h) of src to (x, y)."""

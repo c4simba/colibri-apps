@@ -1,12 +1,17 @@
 # kui.draw - small drawing helpers the components share: text over its
 # shadow, text centered in a row, the hover glow of the notification area,
 # the highlight of a menu row (the accent, deep, with a bright edge at its
-# left), and a picture pasted with rounded, anti-aliased corners.
+# left), a picture pasted with rounded, anti-aliased corners, a card floating
+# over a picture (a map's controls), and Stamp: a shape worked out once and
+# laid down as often as wanted, in any color.
 import math
 import kgfx
 from kgfx import Canvas, Font
+from typing import Callable
 from .panel import Row
-from .theme import HOT, ACCENT, RAISED
+from .theme import HOT, ACCENT, RAISED, BASE, LINE
+
+CARD_SHADOW = 110          # a floating card's shadow (lighter than a menu's: it lies on a picture)
 
 def shadowed(cv: Canvas, font: Font, x: int, y: int, text: str, color: int, shadow: int, alpha: int, slant: int = 0) -> None:
     """Text over its shadow, one pixel down and to the right."""
@@ -94,3 +99,38 @@ def paste_round(dst: Canvas, src: Canvas, x: int, y: int, r: int, corners: int) 
     dst.canvas(src, x, y)
     for n in range(0, len(keep), 3):
         dst.put(keep[n], keep[n + 1], keep[n + 2])
+
+def card(cv: Canvas, x: int, y: int, w: int, h: int, r: int, color: int = BASE) -> None:
+    """A card floating over a picture (a map's search, its buttons): a soft
+    shadow 6 pixels beyond its right and bottom edges, graphite with rounded
+    corners, a thin light edge. The shadow is cast from a box a little smaller
+    than the card, so that it goes on under the rounded corners - nothing of
+    the picture shows between the card and its shadow."""
+    cv.shadow(x, y, w - 3, h - 3, 9, CARD_SHADOW)
+    cv.round_rect(x, y, w, h, r, color)
+    cv.round_frame(x, y, w, h, r, LINE)
+
+class Stamp:
+    """A shape worked out once and laid on canvases as often as wanted, in any
+    color: paint draws it in white on black into a w x h canvas (a glyph, a
+    cover() test), and what is kept is each pixel's coverage. Drawn every
+    frame - a map's pin, a field's magnifier - it costs a blend a pixel, not
+    the shape's tests again."""
+
+    def __init__(self, w: int, h: int, paint: Callable[[Canvas], None]):
+        self.w = w
+        self.h = h
+        cv = Canvas(w, h)
+        paint(cv)
+        self.alpha: list[int] = []
+        for j in range(h):
+            for i in range(w):
+                self.alpha.append(cv.pixel(i, j) & 255)
+
+    def draw(self, cv: Canvas, x: int, y: int, c: int) -> None:
+        for j in range(self.h):
+            row = j * self.w
+            for i in range(self.w):
+                a = self.alpha[row + i]
+                if a > 0:
+                    cv.blend(x + i, y + j, c, a)

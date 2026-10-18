@@ -1,7 +1,8 @@
 # kui.textinput - a line of text being typed: LineEdit holds the text and the
 # caret and does what a key does to them; TextField draws it as a field - a
 # sunken rounded box, its frame lit while it has the keys, the caret a line,
-# the text scrolled so that the caret shows.
+# the text scrolled so that the caret shows; SearchField is one with a
+# magnifier at its left (a search's line).
 #
 # Keys come as KolibriOS gives them in its ASCII mode (fn 2): ASCII, the cp866
 # letters of a Russian layout (decoded here), and the codes of the arrows,
@@ -9,8 +10,9 @@
 from kgfx import Canvas
 from .fonts import SANS
 from .panel import Widget, Row
-from .draw import middle
-from .theme import SUNKEN, LINE, TEXT, TEXT_FAINT, ACCENT
+from .draw import middle, Stamp
+from .theme import SUNKEN, LINE, TEXT, TEXT_DIM, TEXT_FAINT, ACCENT
+from . import glyphs
 
 _CP866_HIGH = "АБВГДЕЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгдежзийклмноп"
 _CP866_TOP = "рстуфхцчшщъыьэюяЁё"
@@ -22,6 +24,7 @@ K_HOME = 180
 K_END = 181
 K_DELETE = 182
 PAD = 10                   # room between the frame and the text
+GLASS = 14                 # a search field's magnifier
 
 def typed(code: int) -> str:
     """The character a key code types ("": none)."""
@@ -81,13 +84,14 @@ class TextField(Widget):
         self.edit = edit
         self.placeholder = placeholder
         self.focused = focused
+        self.indent = 0                      # room left of the text (SearchField's magnifier)
 
     def paint(self, cv: Canvas, row: Row, hot: bool, opened: bool) -> None:
         e = self.edit
         cv.round_rect(row.x, row.y, row.w, row.h, 6, SUNKEN)
         cv.round_frame(row.x, row.y, row.w, row.h, 6, ACCENT if self.focused else LINE)
-        room = row.w - 2 * PAD
-        x = row.x + PAD
+        room = row.w - 2 * PAD - self.indent
+        x = row.x + PAD + self.indent
         y = middle(SANS, row.y, row.h)
         cx = SANS.width(e.text[:e.caret])
         if cx - e.scroll > room - 1:                     # (the caret in sight)
@@ -108,10 +112,26 @@ class TextField(Widget):
     def caret_at(self, row: Row, x: int) -> int:
         """The caret's place for a click at x (panel coordinates) on the field."""
         e = self.edit
-        pen = row.x + PAD - e.scroll
+        pen = row.x + PAD + self.indent - e.scroll
         for i in range(len(e.text)):
             w = SANS.width(e.text[i])
             if x < pen + w // 2:
                 return i
             pen += w
         return len(e.text)
+
+def _glass(cv: Canvas) -> None:
+    glyphs.symbol(cv, "search", 0, 0, GLASS, 0xFFFFFF)
+
+class SearchField(TextField):
+    """A TextField with a magnifier at its left - in the accent while the
+    field has the keys."""
+
+    def __init__(self, edit: LineEdit, placeholder: str = "", focused: bool = True):
+        super().__init__(edit, placeholder, focused)
+        self.indent = GLASS + 6
+        self.glass = Stamp(GLASS, GLASS, _glass)
+
+    def paint(self, cv: Canvas, row: Row, hot: bool, opened: bool) -> None:
+        super().paint(cv, row, hot, opened)
+        self.glass.draw(cv, row.x + PAD, row.y + (row.h - GLASS) // 2, ACCENT if self.focused else TEXT_DIM)

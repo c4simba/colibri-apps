@@ -25,7 +25,7 @@ OUT=${OUT:-build/tests}
 DIR=tests
 EXP=$DIR/expected
 # the libraries (kui, kgfx ...) and the programs' packages (nectar ...)
-export PLAINPYPATH="lib:apps/nectar${PLAINPYPATH:+:$PLAINPYPATH}"
+export PLAINPYPATH="lib:apps/nectar:apps/maps${PLAINPYPATH:+:$PLAINPYPATH}"
 mkdir -p "$OUT" "$EXP"
 pass=0; fail=0; failed=""
 files="$*"

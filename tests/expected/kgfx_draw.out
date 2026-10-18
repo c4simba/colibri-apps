@@ -10,3 +10,4 @@ sub (0, 90)
 canvas 696497591 3c7ceb 3a6ea5 d04020 26476b
 text 77 71 40 92 14 14 82277173
 fit 'Kolibri Imag…' 'Short' True
+paste ['101010', '101010', '101010', 'ffffff', '3060e0', 'ffffff', '101010', '101010', 'ffffff', '3060f0', '101010', '101010']

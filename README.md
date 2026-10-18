@@ -3,10 +3,11 @@
 Programs for [KolibriOS](https://kolibrios.org) written in Python and
 compiled by [plainpy](https://github.com/c4simba/plainpy) into small native
 KolibriOS executables - and what they are made of: **kui**, a UI toolkit,
-`kgfx`, a graphics library, PNG decoding and KolibriOS's own fonts.
+`kgfx`, a graphics library, PNG and JPEG decoding and KolibriOS's own fonts.
 **Nectar**, a whole desktop - the taskbar with its launcher, the
 notification area and its flyouts, the desktop's shortcuts, the system's
-notifications - is the biggest of them. The website, with the screenshots and
+notifications - is the biggest of them; **Maps**, OpenStreetMap and the Earth
+from space over https, shows what plainpy's `requests` does on KolibriOS. The website, with the screenshots and
 how to install it: **[c4simba.github.io/colibri-apps](https://c4simba.github.io/colibri-apps/)**.
 
 ![Nectar: the launcher with a submenu open](apps/nectar/screenshots/launcher.png)
@@ -22,6 +23,7 @@ put anywhere on a KolibriOS disk:
 | [nectar](../../releases/latest/download/nectar) + [nectar.ini](../../releases/latest/download/nectar.ini) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`) and its settings |
 | [notify](../../releases/latest/download/notify) | Nectar's notifications: the toasts' windows and what `@notify` hands them over with - keep it next to `nectar` |
 | [startmenu](../../releases/latest/download/startmenu) | Nectar's launcher alone, for the stock `@TASKBAR` |
+| [maps](../../releases/latest/download/maps) + [mbedtls.obj](../../releases/latest/download/mbedtls.obj) + [cacert.pem](../../releases/latest/download/cacert.pem) | a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: keep the three together |
 | [files](../../releases/latest/download/files) | a small file browser |
 | [counter](../../releases/latest/download/counter) | the smallest kui program |
 
@@ -219,12 +221,74 @@ shrinking window uncovers - the closed menus would stay on the screen - so the
 shell's window takes the focus before it shrinks. No threads, no other
 processes: the launcher is drawn when the shell starts and opens at once.
 
+## Maps
+
+![Maps: a search for Red Square, the places found](apps/maps/screenshots/search.jpg)
+
+`apps/maps/maps.py` is a map of the world: OpenStreetMap's standard map, or
+the Earth from space - [EOxCloudless](https://cloudless.eox.at) 2024,
+Sentinel-2's photos without the clouds (10 m a pixel) -, and a search of
+places by name with OpenStreetMap's Nominatim, all of it over https:
+plainpy's `requests` and `ssl` (TLS 1.2, mbedTLS) on KolibriOS itself. The
+mouse drags the map, the wheel zooms round the pointer, a double click zooms
+in there; `+` and `-` (PageUp, PageDown, the buttons at the top right) zoom,
+the arrows move it; the card at the bottom right (or Tab) shows the map or
+the photos. Typing goes to the search (Russian letters as the keyboard's
+layout gives them): Enter finds the places of that name in the system's
+language - the first one is shown at once with a pin, Up and Down or a click
+go to the others -, Esc closes the list, then leaves the field. The window
+can be resized and maximized; the scale bar, the coordinates of the middle
+and the credits the licences ask for are at the bottom.
+
+| | |
+|---|---|
+| ![where it opens](apps/maps/screenshots/europe.jpg) | ![the middle of Moscow](apps/maps/screenshots/city.jpg) |
+| ![Baikal from space](apps/maps/screenshots/baikal.jpg) | ![the Earth, the window maximized](apps/maps/screenshots/earth.jpg) |
+
+`maps [lat lon [zoom]]` opens it elsewhere than over Europe and Russia. It
+needs, next to it, `mbedtls.obj` (plainpy's TLS library for KolibriOS; also
+`/sys/lib` or `/kolibrios/lib`) and `cacert.pem` (the authorities the
+servers' certificates are checked by: curl.se's; also `/sys/settings` or
+`/kolibrios/etc`) - the release has both - and the network up.
+
+How it works: a KolibriOS thread cannot wait for the network and for its
+window at once, and compiled programs have no threads, so the tiles come one
+at a time between events - `kui.window`'s idle function: a frame is drawn
+when no event waits, then the tile nearest the middle that is not there yet
+is fetched and decoded (in QEMU without KVM a fifth of a second for a
+map's PNG, about twice that for a photo's JPEG), and so on; none while the
+map is held by the mouse, and three seconds later again when the network
+fails. A `requests.Session` per server keeps its connection open, so the
+TLS handshake is made once. The map is drawn into one canvas the size of the
+window (`kgfx`, the tiles pasted row by row) and put on it in one call: a
+drag does not flicker. A tile not there yet shows a piece of a tile of a
+smaller zoom, enlarged, or four of the next zoom, made smaller, while its own
+comes; the tiles are kept in memory, the longest out of sight forgotten
+first. Over the tiles, kui's cards: `SearchField`, `ListEntry`, `Tab`,
+`card`, the pin a `Stamp` of `glyphs.marker`. The package
+`apps/maps/osmmap/`: `geo` (Web Mercator), `tiles`, `places` (Nominatim's
+JSON read into a dataclass, as compiled code reads JSON), `net` (the https),
+`view` (the drawing, the layers, what is where).
+
+The tiles come from OpenStreetMap's tile servers (their
+[policy](https://operations.osmfoundation.org/policies/tiles/): a User-Agent
+that names the program, no bulk downloading - a person dragging a map
+asks for a few) and from EOX (EOxCloudless 2024: CC BY-NC-SA 4.0, for
+non-commercial use, with its credit); the search from
+[Nominatim](https://operations.osmfoundation.org/policies/nominatim/) (one
+search a second at most).
+
 ## kui
 
 kui is a toolkit for KolibriOS programs written in PlainPy, compiled or in the
 interpreter (plainpy runs on KolibriOS too). It has two levels. `kui.window`
 (what `import kui` gives) describes a window with decorators - a paint
-function, buttons, keys, clicks, double clicks, the wheel, UTF-8 text:
+function, buttons, keys (`on_key`, `on_key_code`, `on_any_key`), clicks,
+double clicks, drags and their end, the wheel, UTF-8 text, and `on_idle`: work
+done between events (a function that says when it wants to run again - at
+once, in n/100 s, or after the next event); `@window(..., sizable=True)` makes
+a window the user can resize and maximize, drawn in its client area's
+coordinates (`win.width` x `win.height`):
 
 ```python
 from kui import Window, window
@@ -249,9 +313,11 @@ def leave() -> None:
 counter.run()
 ```
 
-(`apps/counter/counter.py` in full, and `apps/files/files.py`: a list with
+(`apps/counter/counter.py` in full; `apps/files/files.py`: a list with
 keyboard, mouse and wheel navigation and a panel with the entry's size,
-dates, attributes and the first lines - or bytes - of a file.) Everything
+dates, attributes and the first lines - or bytes - of a file; and
+`apps/maps/maps.py`: a sizable window, drags, the wheel and the network
+between events.) Everything
 else in kui is a drawn level, the one Nectar is made of. The interface is made of `lib/kui`, a toolkit for such programs. Every
 panel draws itself - its background, then each row through the widget the row
 carries (a menu item, a tab, a slider, the clock ...), so a new kind of row
@@ -260,14 +326,14 @@ is a small `Widget` subclass; a `Surface` is one window made of panels, and
 
 | `kui` module | |
 |---|---|
-| `window` | the decorator level: `@window(...)`, buttons, keys, clicks, the wheel (`import kui`) |
+| `window` | the decorator level: `@window(...)`, buttons, keys, clicks, drags, the wheel, idle work, sizable windows (`import kui`) |
 | `theme`, `look`, `fonts`, `item` | the look (colors, gradients, sizes, the accent's palettes); `kui.ini`'s `[look]` (accent, text size); the fonts (the system's Tahoma or DejaVu); `Item`: a row of a menu |
 | `panel`, `surface` | `Panel`, `Row`, `Widget`; one window made of panels: shadows, corners over what is beneath, hot rows |
 | `menus`, `popup` | menus on a surface: hover delays, cascades, context menus, the keyboard; their panels and placing |
 | `flyout`, `tooltip`, `dialog` | a bar icon's panel; tooltips; a modal card over the dimmed screen with round choices |
-| `widgets`, `slider`, `chart` | separators, push and text buttons, tabs, check boxes, color swatches; a slider; percents over time |
-| `textinput` | `LineEdit` (a line being typed: cp866 letters, the caret's keys, a paste), `TextField` (its field, scrolled to the caret) |
-| `draw`, `band`, `glyphs`, `icons` | drawing helpers; a gradient per row; drawn symbols; the system's icon strips |
+| `widgets`, `slider`, `chart` | separators, push and text buttons, tabs, check boxes, color swatches, `ListEntry` (a thing found: its name, and dim under it where it is); a slider; percents over time |
+| `textinput` | `LineEdit` (a line being typed: cp866 letters, the caret's keys, a paste), `TextField` (its field, scrolled to the caret), `SearchField` (one with a magnifier) |
+| `draw`, `band`, `glyphs`, `icons` | drawing helpers - `card` (a card floating over a picture, its shadow under the rounded corners too), `Stamp` (a shape worked out once, laid down in any color) -; a gradient per row; drawn symbols (power, restart, search, a map's pin ...); the system's icon strips |
 
 and the package `apps/nectar/nectar/` is the desktop's own, by what it is about:
 
@@ -284,7 +350,7 @@ and the package `apps/nectar/nectar/` is the desktop's own, by what it is about:
 | `dialogs/` | `shutdown` |
 | `shell` | all of it together, the event loop, hotkeys |
 
-## Graphics: `lib/kgfx.py`, `lib/png.py`
+## Graphics: `lib/kgfx.py`, `lib/png.py`, `lib/jpeg.py`
 
 `kgfx` draws 32-bit pictures off-screen and puts them into a KolibriOS window
 in one call (fn 65), flicker-free; it works compiled and in the interpreter,
@@ -295,7 +361,8 @@ and everything but the two KolibriOS calls runs on any system
   `vline`, `frame`, `gradient`, `gradient_stops` (any number of stops),
   anti-aliased `round_rect`, `round_frame`, `ellipse` and `cover` (any
   `inside(x, y)` test, supersampled), `triangle`, `shadow` (a soft drop
-  shadow), `image` (with its alpha channel), `canvas` (copy a part), `text`
+  shadow), `image` (with its alpha channel), `paste` (an opaque picture, row
+  by row), `canvas` (copy a part), `text`
   (also oblique), `blit` (to the window, fn 65 with a row offset) and `grab`
   (from the screen, fn 36);
 - `Image(w, h)`: B G R A pixels - `Image.from_png`, `from_memory` (an icon
@@ -318,13 +385,22 @@ and everything but the two KolibriOS calls runs on any system
 `png` decodes PNG files in PlainPy over the standard library's `zlib`: every
 color type and bit depth, palettes with `tRNS`, Adam7 interlacing.
 `tests/kgfx_draw.py` checks both (pixel values and checksums, the same
-on every target and in the interpreter).
+on every target and in the interpreter). `jpeg` decodes baseline JPEGs -
+what tile servers and most cameras write: gray and YCbCr, any sampling of
+the colors, restart intervals, several scans - with libjpeg's accurate
+integer inverse DCT and its smoothing of colors kept at half the resolution
+(`jpeg.decode(data)`: `png.decode`'s B G R A pixels); progressive ones raise
+`ValueError`. `tests/jpeg_decode.py` holds pictures made by libjpeg-turbo's
+`cjpeg` and the pixels its `djpeg` gives them: 4:4:4 and gray come out the
+same to the bit, 4:2:0 at most 2 off (the smoothing rounds a little
+differently).
 
 ## The other programs
 
 - `apps/files`: a file browser - Up / Down / PgUp / PgDn / Home / End or
   the wheel move, Enter or a double click opens, Backspace goes up.
 - `apps/counter`: a count, +1 and Reset (q closes it) - the smallest kui program.
+- `apps/maps`: the map of the world (above).
 
 A new program is a folder of `apps/` with its main file, a line of the
 `Makefile` (`$(eval $(call app,NAME,apps/NAME/NAME.py,))`) and, if it
@@ -337,7 +413,7 @@ What it takes: [plainpy](https://github.com/c4simba/plainpy) - a release
 `sudo make install` - and fasm on the PATH (`sudo apt install fasm`).
 
 ```sh
-make                    # the programs for KolibriOS: build/kolibrios/nectar, startmenu, notify, counter, files
+make                    # the programs for KolibriOS: build/kolibrios/nectar, startmenu, notify, counter, files, maps
 make nectar             # one of them
 make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
@@ -346,6 +422,11 @@ make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/ru
 ```
 
 (`PLAINPY=path/plainpy`, `FASM=path/fasm` take others than those on the PATH.)
+`make dist` and `make run` put next to `maps` what its https needs:
+`cacert.pem` (curl.se's, downloaded into `build/`) and - with
+`MBEDTLS=path/mbedtls.obj` - plainpy's TLS library for KolibriOS (in plainpy's
+KolibriOS zip, or made by its `make kolibri-tls`); the release workflow takes
+it from plainpy's latest release when that has it.
 The programs are compiled with `lib/` on the module path
 (`PLAINPYPATH=lib plainpy --compile --target kolibri apps/nectar/desktop.py`).
 
@@ -358,7 +439,10 @@ layouts' flyout, `nectar_run` the Run panel (the line, suggestions over a
 made-up disk, what lines run, the history), `nectar_settings` the settings
 card and the ini keys it writes, `nectar_notes` the notifications (`@notify`'s
 parameters, toasts, the bell and its list, `autorun.dat` made to start
-Nectar), `kgfx_draw` and `kfont_glyphs` the graphics. `startmenu_kolibri` runs the stand-alone launcher on the scripted
+Nectar), `maps_view` the map (Web Mercator, the scale, the tiles from a
+made-up server - one that cannot be reached, one without the tile, one that
+answers nonsense -, previews, the window drawn, the places found, the
+layers), `kgfx_draw`, `jpeg_decode` and `kfont_glyphs` the graphics. `startmenu_kolibri` runs the stand-alone launcher on the scripted
 KolibriOS of plainpy's `tests/x86run.py`:
 `TARGET=kolibri RUN="python3 <plainpy>/tests/x86run.py" make test`.
 
@@ -373,11 +457,13 @@ again for every release, which it names.
 
 ```text
 apps/nectar/          Nectar: desktop.py, startmenu.py, notify.py, the package nectar/, nectar.ini, screenshots/
+apps/maps/            Maps: maps.py, the package osmmap/, screenshots/
 apps/files/           the file browser
 apps/counter/         the smallest kui program
 lib/kui/              the toolkit
 lib/kgfx.py           pictures, fonts, drawing (kgfx_sans.py, kgfx_tahoma.py: fonts made by tools/mkfont.py)
 lib/png.py            PNG decoding
+lib/jpeg.py           JPEG decoding (baseline)
 lib/kfont.py          KolibriOS's .kf fonts as kgfx fonts
 tests/                the tests and their expected outputs
 site/                 the website (GitHub Pages: .github/workflows/pages.yml)

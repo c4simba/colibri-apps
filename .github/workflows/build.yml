@@ -47,6 +47,16 @@ jobs:
         run: make test TARGET=interp
       - name: Tests (compiled)
         run: make test
+      - name: plainpy's TLS for KolibriOS (mbedtls.obj, next to maps)
+        env:
+          GH_TOKEN: ${{ secrets.PLAINPY_TOKEN || github.token }}
+        run: |
+          if gh release download -R "$PLAINPY_REPO" -p plainpy-kolibrios.zip -D "$RUNNER_TEMP" &&
+             unzip -j -o "$RUNNER_TEMP/plainpy-kolibrios.zip" '*mbedtls.obj' -d "$RUNNER_TEMP/tls"; then
+            echo "MBEDTLS=$RUNNER_TEMP/tls/mbedtls.obj" >> "$GITHUB_ENV"
+          else
+            echo "plainpy's release has no mbedtls.obj: the zip goes without it"
+          fi
       - name: The programs for KolibriOS
         run: make dist
       - uses: actions/upload-artifact@v4

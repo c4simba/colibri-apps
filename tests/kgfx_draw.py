@@ -1,8 +1,9 @@
 # lib/png.py and lib/kgfx.py (the runner puts lib/ in PLAINPYPATH): PNG
 # decoding (RGBA with the Sub filter, a 2-bit palette with tRNS and Up, 16-bit
 # gray with Paeth, Adam7), images (cut, keyed, scaled down and up), a canvas
-# (rectangles, gradients, anti-aliased shapes, shadows, Tahoma text) - as
-# pixel values and checksums, the same compiled and in the interpreter.
+# (rectangles, gradients, anti-aliased shapes, shadows, Tahoma text, an opaque
+# picture pasted) - as pixel values and checksums, the same compiled and in
+# the interpreter.
 import sys
 import png
 from kgfx import Canvas, Image, mix
@@ -76,3 +77,8 @@ w2 = t.text(TAHOMA_BOLD, 2, 14, "All Programs", 0x0A246A)
 w3 = t.text(TAHOMA_BIG, 90, 14, "start", 0x2B7A25, 255, 4)
 print("text", w1, w2, w3, TAHOMA.width("Turn Off Computer"), TAHOMA.height, TAHOMA_BIG.ascent, checksum(t))
 print("fit", repr(TAHOMA.fit("Kolibri Image Viewer", 70)), repr(TAHOMA.fit("Short", 70)), TAHOMA.glyph("☃") == TAHOMA.glyph("?"))
+
+p = Canvas(4, 3, 0x101010)                           # an opaque picture pasted, partly beyond the edges
+p.paste(icon, -2, 1)
+p.paste(icon, 3, -3)
+print("paste", [hx(p.pixel(x, y), 6) for y in range(3) for x in range(4)])

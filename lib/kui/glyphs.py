@@ -1,7 +1,8 @@
 # kui.glyphs - little pictures drawn rather than taken from icon strips, as
 # thin anti-aliased strokes in one color (at any place of a canvas, any
-# size): the power, restart, log off and kernel symbols, the chevron of rows
-# that open more, arrows, a check mark, a network's bars, a speaker.
+# size): the power, restart, log off, kernel and search symbols, the chevron
+# of rows that open more, arrows, a check mark, a network's bars, a speaker,
+# a map's pin.
 import math
 import kgfx
 from kgfx import Canvas
@@ -63,7 +64,7 @@ def _in_triangle(px: float, py: float, t: list[float]) -> bool:
 
 def symbol(cv: Canvas, which: str, x: int, y: int, size: int, color: int) -> None:
     """A symbol in a size x size square: "power", "restart", "kernel" (a ring
-    with an arrow), "logoff" (a door and an arrow)."""
+    with an arrow), "search" (a magnifier), "logoff" (a door and an arrow)."""
     s = float(size)
     u = s / 20.0                                  # (drawn on a 20 x 20 grid)
     w = max(0.75, 0.85 * u)
@@ -98,6 +99,15 @@ def symbol(cv: Canvas, which: str, x: int, y: int, size: int, color: int) -> Non
         if which == "kernel":
             d = max(2, int(s * 0.16))
             cv.ellipse(x + (size - d) // 2, y + int(s * 0.525) - d // 2, d, d, color)
+    elif which == "search":
+        def glass(px: float, py: float) -> bool:
+            gx = px / u
+            gy = py / u
+            if _ring(gx, gy, 8.0, 8.0, 5.6, 1.05) <= 0.0:
+                return True
+            along = (gx + gy) / 2.0                   # (the handle: on the diagonal, from the ring on)
+            return 12.2 <= along <= 18.0 and abs(gx - gy) <= 2.4
+        cv.cover(x, y, size, size, glass, color)
     else:
         def door(px: float, py: float) -> bool:
             gx = px / u
@@ -112,6 +122,21 @@ def symbol(cv: Canvas, which: str, x: int, y: int, size: int, color: int) -> Non
             dx = 16.5 - gx
             return dx >= 0.0 and dx <= 3.2 and abs(abs(gy - 10.0) - dx) <= sw
         cv.cover(x, y, size, size, door, color)
+
+def marker(cv: Canvas, x: int, y: int, w: int, color: int) -> None:
+    """A map's pin, w wide and w * 15 / 11 high, its tip at the middle of its
+    bottom edge: a disc and a point under it (a dot on the disc is the
+    caller's to draw)."""
+    s = w / 22.0                                  # (drawn on a 22 x 30 grid)
+    def pin(px: float, py: float) -> bool:
+        gx = px / s - 11.0
+        gy = py / s
+        if gx * gx + (gy - 10.5) * (gy - 10.5) <= 9.5 * 9.5:
+            return True
+        if gy < 15.0 or gy > 29.0:
+            return False
+        return abs(gx) <= 8.2 * (29.0 - gy) / 14.0    # (the point narrows down to its tip)
+    cv.cover(x, y, w, w * 15 // 11, pin, color)
 
 def chip(cv: Canvas, which: str, x: int, y: int, size: int, hot: bool, back: int, tint: int) -> None:
     """A round button with a symbol: a quiet ring until the pointer is on it,

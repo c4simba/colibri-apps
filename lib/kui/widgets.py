@@ -1,5 +1,6 @@
 # kui.widgets - widgets that draw a row of a panel and are not about one
-# kind of panel: separators, buttons, tabs, check boxes, swatches.
+# kind of panel: separators, buttons, tabs, check boxes, swatches, entries
+# of a list of things found.
 #
 #   FadingSeparator   a line across the row fading out at both ends
 #   PushButton        a dialog's button (Cancel)
@@ -7,12 +8,13 @@
 #   Tab               one of a row of tabs: the chosen one raised, underlined
 #   CheckBox          a box, checked or not, and its label
 #   Swatch            a color to choose: a disc of it, a ring round the chosen one
+#   ListEntry         a thing found: its name, and dim under it where or what it is
 import math
 from kgfx import Canvas
-from .fonts import SANS, SANS_BOLD
+from .fonts import SANS, SANS_BOLD, SANS_SMALL
 from . import glyphs
 from .panel import Widget, Row
-from .draw import centered, middle
+from .draw import centered, middle, highlight
 from .theme import RAISED, SUNKEN, LINE, TEXT, TEXT_DIM, ACCENT, PLATE_DOWN, HOT, HOT_EDGE
 
 class FadingSeparator(Widget):
@@ -121,3 +123,25 @@ class Swatch(Widget):
                 cov = r - math.sqrt(dx * dx + dy * dy) + 0.5
                 if cov > 0.0:
                     cv.blend(x + 4 + i, y + 4 + j, sheen.pixel(i, j), min(255, int(cov * 255.0)))
+
+class ListEntry(Widget):
+    """A row of a list of things found (a place, a file): its name and, dim
+    under it, where or what it is - both cut short to the row; lit as a
+    menu's row is while hot (under the pointer, or the one chosen)."""
+
+    def __init__(self, name: str, detail: str):
+        self.name = name
+        self.detail = detail
+
+    @staticmethod
+    def height() -> int:
+        """A row's height for the two lines."""
+        return SANS_BOLD.height + SANS_SMALL.height + 12
+
+    def paint(self, cv: Canvas, row: Row, hot: bool, opened: bool) -> None:
+        if hot:
+            highlight(cv, row)
+        room = row.w - 24
+        y = row.y + (row.h - SANS_BOLD.height - SANS_SMALL.height - 1) // 2
+        cv.text(SANS_BOLD, row.x + 12, y, SANS_BOLD.fit(self.name, room), TEXT)
+        cv.text(SANS_SMALL, row.x + 12, y + SANS_BOLD.height + 1, SANS_SMALL.fit(self.detail, room), TEXT_DIM)

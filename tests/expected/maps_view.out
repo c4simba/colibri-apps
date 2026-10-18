@@ -1,0 +1,43 @@
+moscow 158464 81946 619 320 55.75649, 37.61719
+edges 0 1024 0 1023 512
+world 1024 134217728 True -180.0
+floor -1 -1 -2 0
+wrap 3 0 3 3
+fixed 0.00000 -12.50 0.13 3.0
+scale 4 91 500000 500 км 500 km
+scale 10 58 5000 5 км 5 km
+scale 16 74 100 100 м 100 m
+fit 9 2 18
+place Москва | Центральный федеральный округ, Россия | 9
+place Красная площадь |  | 17 55.75
+wanted ['2/1/0', '2/2/1', '2/3/1', '2/0/0'] 4
+load 1 3 True ''
+offline 2 3 '[Errno 101] Network is unreachable' True
+load 1 2 True
+404 1 1 True 'HTTP 404 Not Found'
+load 1 0 0 ''
+calls ['2/1/0', '2/2/1', '2/2/1', '2/3/1', '2/0/0']
+nonsense 1 True png: not a PNG file
+parent 503200 503200
+enlarged 503200 503200
+from above True 503200 True
+shrunk 786400 789600 786446 f2efe9 789600
+nothing near True False
+kept True 10
+forgotten 20 True
+view 3 1238 640 55.77657, 37.61719
+frame 2 819424470
+loaded 2 0 401225482 ''
+at 0 1 1 2 3 5
+zoomed 5 62.10388, 21.79688 62.10388, 21.79688
+deepest 19
+round the world 99 -145.20
+north 120 120
+found 8 True 0 True 20 21 0
+list 874779269
+second 17 1 55.75000, 37.61000
+nothing Ничего не найдено False 4 148834417
+layers 0 19 (158, 179, 150, 34) 10 11 5
+photos 1 18 True EOxCloudless https://cloudless.eox.at by EOX IT Servic…
+photos drawn 18 4 945184843
+round again 0 18 © OpenStreetMap contributors

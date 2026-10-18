@@ -1,0 +1,6 @@
+4:2:0 19 13 off by 2 checksum 447370028
+4:4:4 19 13 off by 0 checksum 931976373
+gray 19 13 off by 0 checksum 421702293
+progressive ValueError: jpeg: not a baseline picture (SOF2)
+not a JPEG ValueError: jpeg: not a JPEG file
+cut short ValueError: jpeg: cut short
