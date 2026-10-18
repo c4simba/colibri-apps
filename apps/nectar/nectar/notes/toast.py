@@ -20,7 +20,8 @@ from kui.surface import Surface
 from kui.theme import BASE, LINE, TEXT, TEXT_DIM, TEXT_FAINT, SHEEN, RADIUS, SHADOW
 from . import area
 from .note import Note
-from .card import text_lines, badge, close_mark
+from .card import text_lines, badge
+from kui.glyphs import cross
 
 K_TOAST = 31
 W = 340
@@ -66,7 +67,7 @@ class ToastCard(Panel):
             cv.text(SANS, self.text_x, y, line, TEXT_DIM if n.title != "" else TEXT)
             y += SANS.height + 2
         if not n.no_click:
-            close_mark(cv, self.w - 22, 13, 9, TEXT_FAINT)
+            cross(cv, self.w - 22, 13, 9, TEXT_FAINT)
         cv.round_frame(0, 0, self.w, self.h, RADIUS, LINE)
 
 class Toast:

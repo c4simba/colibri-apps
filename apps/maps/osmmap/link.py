@@ -144,6 +144,12 @@ class Fetcher:
     def running(self) -> bool:
         return self.pid > 0
 
+    def alive(self) -> bool:
+        """Is it still there? (A fetcher that is gone is forgotten: pid -1.)"""
+        if self.pid > 0 and k.slot_of_pid(self.pid) == 0:
+            self.pid = -1
+        return self.pid > 0
+
     def want(self, layer: int, wanted: list[tuple[int, int, int]]) -> None:
         text = want_message(layer, wanted)
         if text != self.sent:
@@ -246,6 +252,9 @@ def serve(window: int, language: str) -> None:
                     retry_at = now + RETRY
             except ValueError as e:
                 b = text_message("E", w[0], w[1], 1, w[2], w[3], str(e))
+                finished = True
+            except Exception as e:                       # (what else went wrong: said, not kept quiet)
+                b = text_message("E", w[0], w[1], 1, w[2], w[3], type(e).__name__ + ": " + str(e))
                 finished = True
             if finished:
                 done.append(str(w[0]) + "/" + str(w[1]) + "/" + str(w[2]) + "/" + str(w[3]))

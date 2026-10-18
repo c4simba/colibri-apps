@@ -85,10 +85,14 @@ def maps(win: Window) -> None:
     show()
 
 def show() -> None:
+    """Draw the window again - and tell the fetcher which tiles that frame
+    wants (whether it was drawn between events or because the system asked)."""
     global dirty
     dirty = False
     view.render()
     view.cv.blit(0, 0)
+    if fetcher.running():
+        fetcher.want(view.layer, view.tiles.wanted_tiles())
 
 def changed() -> None:
     global dirty
@@ -274,13 +278,11 @@ def came() -> None:
 def work() -> int:
     if dirty:
         show()
-        if fetcher.running():
-            fetcher.want(view.layer, view.tiles.wanted_tiles())
         return 0
-    if fetcher.running():
+    if fetcher.alive():
         if fetcher.waiting() and not fetcher.flush():
             return 5                         # (it is not ready yet: soon again)
-        return -1
+        return 100 if view.tiles.pending() > 0 else -1   # (tiles to come: is it still there in a second?)
     return work_here()
 
 def work_here() -> int:

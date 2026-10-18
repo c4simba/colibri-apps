@@ -21,14 +21,11 @@ folder of its name with the program, what it needs next to it and
 | | |
 |---|---|
 | [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them in one folder |
-| [nectar.zip](../../releases/latest/download/nectar.zip) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`): `nectar`, `notify` (the toasts' windows and what `@notify` hands them over with) and `nectar.ini` (its settings) |
+| [nectar.zip](../../releases/latest/download/nectar.zip) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`): `nectar`, `notify` (the toasts' windows and what `@notify` hands them over with), `nectar.ini` (its settings) and `nectar.skn` / `nectar.dtp` (its skin for every window) |
 | [maps.zip](../../releases/latest/download/maps.zip) | Maps: a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: `maps`, `mbedtls.obj` (plainpy's TLS) and `cacert.pem` (the certificate authorities) |
 | [startmenu.zip](../../releases/latest/download/startmenu.zip) | Nectar's launcher alone, for the stock `@TASKBAR` |
 | [files.zip](../../releases/latest/download/files.zip) | a small file browser |
 | [counter.zip](../../releases/latest/download/counter.zip) | the smallest kui program |
-
-(The release has every file on its own too: `nectar`, `notify`, `nectar.ini`,
-`maps`, `mbedtls.obj`, `cacert.pem`, `startmenu`, `files`, `counter`.)
 
 To try Nectar, start `nectar` (from Eolite, say): it replaces the taskbar
 until the next boot. To keep it, put it (with `nectar.ini` and `notify`) on a
@@ -57,6 +54,7 @@ an image RDSAVE opens to save the image. By hand: make the line of
 | ![Alt+Tab](apps/nectar/screenshots/switcher.png) | ![shortcuts dragged](apps/nectar/screenshots/drag.png) |
 | ![notifications](apps/nectar/screenshots/notifications.png) | ![the bell's list](apps/nectar/screenshots/notes.png) |
 | ![made the default shell](apps/nectar/screenshots/default.png) | ![shutting down](apps/nectar/screenshots/shutdown.png) |
+| ![every window in Nectar's colors](apps/nectar/screenshots/skin.png) | |
 
 ## Nectar
 
@@ -176,13 +174,30 @@ Taskbar Settings (the bar's menu) is a card for the shell itself: the
 launcher button's label, the accent (five palettes: emerald, sapphire,
 amethyst, amber, coral - each a sheen of three colors), the size of the
 text (13 to 16 px), the clock's seconds, which icons the notification area
-shows, a link that opens `nectar.ini` in the editor - and Startup's **Make
-the default shell** (once it is, "Starts with the system"), which does its
-part at once and says how it went in a notification. Apply writes
-`nectar.ini` (`[launcher]`, `[bar]`) and `kui.ini` (`[look]`: the accent
-and the text's size are kui's, shared by every kui program in that folder)
-and starts the shell again - kui reads `kui.ini` as it is loaded, so the
-whole interface takes the new look.
+shows, Windows' **In Nectar's colors** (below), a link that opens
+`nectar.ini` in the editor - and Startup's **Make the default shell** (once
+it is, "Starts with the system"), which does its part at once and says how
+it went in a notification. Apply writes `nectar.ini` (`[launcher]`, `[bar]`)
+and `kui.ini` (`[look]`: the accent and the text's size are kui's, shared by
+every kui program in that folder) and starts the shell again - kui reads
+`kui.ini` as it is loaded, so the whole interface takes the new look.
+
+**In Nectar's colors** dresses every window of the system as Nectar: a
+KolibriOS skin (`lib/kui/skin.py`) - graphite captions with a line of the
+accent under the active window's, the minimize and close buttons soft
+plates (close red), frames with a dark outline and a thin light edge - and
+the color table that comes with a skin, which the system's programs draw
+with: graphite work areas, light text, buttons of the accent (Calc, Eolite,
+RDSAVE, the stock taskbar ... take it; a program that draws with colors of
+its own keeps them). Apply makes the skin in the accent chosen, writes it
+next to the shell as `nectar.skn`, puts it on at once (fn 48.8: every window
+is drawn again) and names it in `/sys/settings/system.ini`'s `[style]
+skin=` - ESKIN, which `autorun.dat` starts, puts on that skin at every boot
+(that line and nothing else of the file changes; RDSAVE opens to keep it on
+a system booted from an image). Unchecked, the line goes and the system's
+own skin is back. The release has the skin as files too - `nectar.skn` and
+`nectar.dtp` (the colors alone) in `nectar.zip`, for the system's own
+SKINCFG or `system.ini` by hand.
 
 What they show is the system's own: the programs come from
 `/sys/settings/menu.dat` (as `@MENU`'s do), the desktop's shortcuts and their
@@ -341,7 +356,8 @@ is a small `Widget` subclass; a `Surface` is one window made of panels, and
 | `flyout`, `tooltip`, `dialog` | a bar icon's panel; tooltips; a modal card over the dimmed screen with round choices |
 | `widgets`, `slider`, `chart` | separators, push and text buttons, tabs, check boxes, color swatches, `ListEntry` (a thing found: its name, and dim under it where it is); a slider; percents over time |
 | `textinput` | `LineEdit` (a line being typed: cp866 letters, the caret's keys, a paste), `TextField` (its field, scrolled to the caret), `SearchField` (one with a magnifier) |
-| `draw`, `band`, `glyphs`, `icons` | drawing helpers - `card` (a card floating over a picture, its shadow under the rounded corners too), `Stamp` (a shape worked out once, laid down in any color) -; a gradient per row; drawn symbols (power, restart, search, a map's pin ...); the system's icon strips |
+| `draw`, `band`, `glyphs`, `icons` | drawing helpers - `card` (a card floating over a picture, its shadow under the rounded corners too), `Stamp` (a shape worked out once, laid down in any color) -; a gradient per row; drawn symbols (power, restart, search, a cross, a map's pin ...); the system's icon strips |
+| `skin` | a KolibriOS skin (`.skn`) and color table (`.dtp`) in kui's look and accent: what every window of the system wears |
 
 and the package `apps/nectar/nectar/` is the desktop's own, by what it is about:
 
@@ -353,6 +369,7 @@ and the package `apps/nectar/nectar/` is the desktop's own, by what it is about:
 | `menu/` | `startpanel` (the launcher and its rows' widgets), `controller` (kui's menus with the launcher), `standalone` |
 | `taskbar/` | `bar` (the panel), its widgets `startbutton`, `pins` (pinned programs, dragged), `tasks`, `sysmon`, `volume`, `network`, `language`, `clock`, `showdesktop`; `contextmenu`, `switcher` (Alt+Tab) |
 | `flyouts/` | `system`, `sound`, `netinfo` (the network's details), `calendar`, `layouts` (the keyboard's), `settings` (Taskbar Settings) |
+| `style` | Nectar's skin on every window: made, put on, named in `system.ini` for the next boot, taken off |
 | `run/` | the Run panel: `files` (the disks, a folder read once), `suggest` (history, programs, paths), `command` (what a line runs), `panel` |
 | `desktop/` | `desktopicons`, `drag` |
 | `dialogs/` | `shutdown` |
@@ -421,11 +438,11 @@ What it takes: [plainpy](https://github.com/c4simba/plainpy) - a release
 `sudo make install` - and fasm on the PATH (`sudo apt install fasm`).
 
 ```sh
-make                    # the programs for KolibriOS: build/kolibrios/nectar, startmenu, notify, counter, files, maps
+make                    # build/kolibrios: nectar, startmenu, notify, counter, files, maps; nectar.skn, nectar.dtp
 make nectar             # one of them
 make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
-make dist               # build/release: kolibrios-apps.zip, a zip of each program, the files one by one
+make dist               # build/release: kolibrios-apps.zip and a zip of each program
 make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/run-kolibrios.sh)
 ```
 
@@ -446,7 +463,9 @@ drawing), `nectar_tray` the monitor's arithmetic, the volume's mapping, the
 Alt+Tab card, a dragged shortcut's cell and `icon.ini`, pins moved and the
 layouts' flyout, `nectar_run` the Run panel (the line, suggestions over a
 made-up disk, what lines run, the history), `nectar_settings` the settings
-card and the ini keys it writes, `nectar_notes` the notifications (`@notify`'s
+card and the ini keys it writes, `nectar_style` the windows' skin
+(`system.ini`'s line set, replaced, taken away; the `.skn` read back as the
+kernel reads it), `nectar_notes` the notifications (`@notify`'s
 parameters, toasts, the bell and its list, `autorun.dat` made to start
 Nectar), `maps_view` the map (Web Mercator, the scale, the tiles from a
 made-up server - one that cannot be reached, one without the tile, one that
@@ -457,7 +476,7 @@ KolibriOS of plainpy's `tests/x86run.py`:
 
 GitHub Actions (`.github/workflows/build.yml`) builds and tests it on every
 push with plainpy's latest release; a tag `v1.2.3` publishes the release
-1.2.3 with the files above. `.github/workflows/pages.yml` publishes the
+1.2.3 with the zips above. `.github/workflows/pages.yml` publishes the
 website - `site/index.html` with `apps/nectar/screenshots/` - on GitHub Pages
 (once, in the repository's Settings -> Pages: Source "GitHub Actions"),
 again for every release, which it names.
@@ -476,7 +495,7 @@ lib/jpeg.py           JPEG decoding (baseline)
 lib/kfont.py          KolibriOS's .kf fonts as kgfx fonts
 tests/                the tests and their expected outputs
 site/                 the website (GitHub Pages: .github/workflows/pages.yml)
-tools/                mkfont.py (TrueType fonts into kgfx modules), run-kolibrios.sh (QEMU)
+tools/                mkfont.py (TrueType fonts into kgfx modules), mkskin.py (Nectar's skin), run-kolibrios.sh (QEMU)
 ```
 
 `import kolibri` - the KolibriOS system functions - is plainpy's own

@@ -1,8 +1,8 @@
 # kui.glyphs - little pictures drawn rather than taken from icon strips, as
 # thin anti-aliased strokes in one color (at any place of a canvas, any
 # size): the power, restart, log off, kernel and search symbols, the chevron
-# of rows that open more, arrows, a check mark, a network's bars, a speaker,
-# a map's pin.
+# of rows that open more, arrows, a check mark, a cross, a network's bars, a
+# speaker, a map's pin.
 import math
 import kgfx
 from kgfx import Canvas
@@ -49,6 +49,14 @@ def check(cv: Canvas, x: int, y: int, size: int, color: int) -> None:
     def inside(px: float, py: float) -> bool:
         return _segment(px, py, s * 0.16, s * 0.52, s * 0.4, s * 0.76) <= w or \
             _segment(px, py, s * 0.4, s * 0.76, s * 0.86, s * 0.26) <= w
+    cv.cover(x, y, size, size, inside, color)
+
+def cross(cv: Canvas, x: int, y: int, size: int, color: int, half: float = 0.75) -> None:
+    """An x in a size x size square, corner to corner, of strokes 2 * half
+    wide (what closes something: a notification, a window)."""
+    s = float(size)
+    def inside(px: float, py: float) -> bool:
+        return abs(px - py) <= half or abs(px + py - s) <= half
     cv.cover(x, y, size, size, inside, color)
 
 def _ring(px: float, py: float, cx: float, cy: float, r: float, w: float) -> float:

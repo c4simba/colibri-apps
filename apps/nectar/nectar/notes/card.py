@@ -160,10 +160,3 @@ def bell(cv: Canvas, x: int, y: int, size: int, color: int) -> None:
             return dx <= 8.0
         return _near(gx, gy, 10.0, 17.2, 2.0)        # the clapper
     cv.cover(x, y, size, size, inside, color)
-
-def close_mark(cv: Canvas, x: int, y: int, size: int, color: int) -> None:
-    """A thin x (what closes it)."""
-    s = float(size)
-    def inside(px: float, py: float) -> bool:
-        return abs(px - py) <= 0.75 or abs(px + py - s) <= 0.75
-    cv.cover(x, y, size, size, inside, color)

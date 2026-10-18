@@ -12,6 +12,11 @@ https://github.com/c4simba/nectar
   nectar.ini  its settings - the labels, the launcher's places, the bar's
               icons, the pinned programs. Keep it next to nectar (or in
               /sys/settings); nectar writes its changes there.
+  nectar.skn  Nectar's skin for every window of the system (and the
+  nectar.dtp  colors programs draw with; the .dtp: the colors alone).
+              Taskbar Settings' "In Nectar's colors" makes and puts on one
+              itself; by hand: SKINCFG, or skin=/path/nectar.skn in
+              /sys/settings/system.ini's [style] (ESKIN puts it on at boot).
   startmenu   Nectar's launcher alone, for the stock @TASKBAR
   maps        a map of the world over https: OpenStreetMap, the Earth from
               space (EOxCloudless), a search of places. It needs, next to
@@ -55,3 +60,8 @@ maps - карта мира через https: OpenStreetMap, снимки Зем�
 (TLS для plainpy; можно в /sys/lib) и cacert.pem (сертификаты; можно в
 /sys/settings), сеть должна быть настроена. Мышь двигает карту, колесо
 меняет масштаб, Tab переключает схему и снимки, набранный текст ищет место.
+
+Чтобы все окна системы были в цветах Nectar, в "Параметрах панели" отметьте
+"Окна: В цветах Nectar" и нажмите "Применить": скин (nectar.skn рядом с
+nectar) наденется сразу и пропишется в /sys/settings/system.ini ([style]
+skin=), его будет ставить ESKIN при загрузке; сохраните образ (RDSAVE).

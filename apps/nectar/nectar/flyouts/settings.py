@@ -1,9 +1,12 @@
 # nectar.flyouts.settings - the shell's settings, opened from the bar's menu:
 # the launcher button's label, the accent and the size of the text (kui's
 # look: kui.ini), the clock's seconds and the notification area's icons
-# (nectar.ini's [launcher] and [bar]), and nectar.ini itself, to edit by hand.
-# Apply writes the files and starts the shell again (the new one ends this
-# one): the look is taken as the shell's modules are loaded. "Make the
+# (nectar.ini's [launcher] and [bar]), Nectar's skin on every window of the
+# system (nectar.style: the captions, the frames, the programs' colors, in
+# the accent chosen), and nectar.ini itself, to edit by hand. Apply writes
+# the files and starts the shell again (the new one ends this one): the look
+# is taken as the shell's modules are loaded - the skin is put on (or taken
+# off) at once, RDSAVE opening if system.ini is the RAM disk's. "Make the
 # default shell" does its part at once (nectar.autorun: autorun.dat starts
 # Nectar instead of @TASKBAR, @ICON, @DOCKY; notify is /sys/@notify) and the
 # card goes - the shell says how it went in a notification.
@@ -17,6 +20,7 @@
 #   Icons         [x] System load
 #                 [x] Volume
 #                 [x] Network
+#   Windows       [x] In Nectar's colors
 #   Startup       [ Make the default shell ]     (or: v Starts with the system)
 #   nectar.ini >               [Cancel] [Apply]
 import sys
@@ -35,11 +39,12 @@ from .. import config
 from ..config import Config
 from .. import system
 from .. import autorun
+from .. import style
 from ..autorun import Outcome
 from ..theme import LINE_SOFT, TEXT_DIM, TEXT_FAINT, DANGER, ACCENT, PALETTE_NAMES, palette
 
 W = 430
-H = 420
+H = 458
 LEFT = 18                  # the names
 CONTROLS = 150             # the controls
 FIELD_Y = 66
@@ -48,7 +53,8 @@ SIZE_Y = 148
 SECONDS_Y = 188
 ICONS_Y = 224
 CHECK_H = 28
-STARTUP_Y = 318
+WINDOWS_Y = 314
+STARTUP_Y = 356
 BUTTONS_Y = H - 46
 SIZES = [13, 14, 15, 16]
 R_FIELD = 80
@@ -62,6 +68,7 @@ R_INI = 87
 R_CANCEL = 88
 R_APPLY = 89
 R_DEFAULT = 90
+R_SKIN = 91
 KUI_HEAD = """; kui.ini - the look of kui programs (lib/kui): [look] accent= a palette
 ; (emerald, sapphire, amethyst, amber, coral), font_size= the text's px.
 """
@@ -81,6 +88,8 @@ class SettingsPanel(Flyout):
         self.monitor = cfg.monitor
         self.sound = cfg.sound
         self.network = cfg.network
+        self.skin_on = style.is_on(here)     # the windows wear Nectar's skin
+        self.skin = self.skin_on
         self.error = ""
         self.program = system.own_path()     # what autorun.dat is to start
         cut = self.program.rfind("/")
@@ -103,7 +112,8 @@ class SettingsPanel(Flyout):
         checks = [(R_SECONDS, "Секунды" if ru else "Seconds", self.seconds, SECONDS_Y),
                   (R_MONITOR, "Загрузка системы" if ru else "System load", self.monitor, ICONS_Y),
                   (R_SOUND, "Громкость" if ru else "Volume", self.sound, ICONS_Y + CHECK_H),
-                  (R_NETWORK, "Сеть" if ru else "Network", self.network, ICONS_Y + 2 * CHECK_H)]
+                  (R_NETWORK, "Сеть" if ru else "Network", self.network, ICONS_Y + 2 * CHECK_H),
+                  (R_SKIN, "В цветах Nectar" if ru else "In Nectar's colors", self.skin, WINDOWS_Y)]
         for c in checks:
             self.rows.append(Row(Item(title=c[1]), c[0], CONTROLS, c[3], 200, CHECK_H, CheckBox(c[2])))
         if not self.default:
@@ -126,7 +136,8 @@ class SettingsPanel(Flyout):
             cv.text(SANS, LEFT, 40, note, TEXT_FAINT)
         names = [("Кнопка меню" if ru else "Menu button", FIELD_Y, 30), ("Акцент" if ru else "Accent", SWATCH_Y, 32),
                  ("Размер текста" if ru else "Text size", SIZE_Y, 28), ("Часы" if ru else "Clock", SECONDS_Y, CHECK_H),
-                 ("Значки" if ru else "Icons", ICONS_Y, CHECK_H), ("Запуск" if ru else "Startup", STARTUP_Y, 30)]
+                 ("Значки" if ru else "Icons", ICONS_Y, CHECK_H), ("Окна" if ru else "Windows", WINDOWS_Y, CHECK_H),
+                 ("Запуск" if ru else "Startup", STARTUP_Y, 30)]
         for n in names:
             cv.text(SANS, LEFT, middle(SANS, n[1], n[2]), n[0], TEXT_DIM)
         if self.default:
@@ -150,6 +161,8 @@ class SettingsPanel(Flyout):
             self.sound = not self.sound
         elif r.kind == R_NETWORK:
             self.network = not self.network
+        elif r.kind == R_SKIN:
+            self.skin = not self.skin
         elif r.kind == R_INI:
             return self.ini_file()
         elif r.kind == R_CANCEL:
@@ -197,9 +210,17 @@ class SettingsPanel(Flyout):
         return t if t != "" else self.cfg.start
 
     def changed(self) -> bool:
+        return self.restyled() or self.skin_changed()
+
+    def restyled(self) -> bool:
+        """What the shell takes as it starts changed (it is started again)."""
         c = self.cfg
         return self.label() != c.start or self.accent != look.text("accent", "emerald") or self.size != SIZE or \
             self.seconds != c.seconds or self.monitor != c.monitor or self.sound != c.sound or self.network != c.network
+
+    def skin_changed(self) -> bool:
+        """The skin to put on or off - or on again, of another accent."""
+        return self.skin != self.skin_on or (self.skin and self.accent != look.text("accent", "emerald"))
 
     def ini_file(self) -> str:
         """nectar.ini next to the shell (made from the one in use if it is not there yet)."""
@@ -221,9 +242,30 @@ class SettingsPanel(Flyout):
         kui = config.with_keys(kui, "look", [("accent", self.accent), ("font_size", str(self.size))])
         return (text, kui)
 
+    def apply_skin(self) -> bool:
+        """Nectar's skin on the windows (or off), RDSAVE to keep it; False: the
+        error is on the card."""
+        if self.skin:
+            o = style.put_on(self.here, palette(self.accent), self.russian)
+        else:
+            o = style.take_off(self.russian)
+        if not o.ok:
+            self.error = o.error
+            return False
+        self.skin_on = self.skin
+        if o.ramdisk and system.program_exists("rdsave"):
+            system.start("rdsave")
+        return True
+
     def apply(self) -> None:
-        """Write the settings and start the shell again (nothing changed: just close)."""
+        """Write the settings and start the shell again (nothing changed: just
+        close; only the skin: put it on, and close)."""
         if not self.changed():
+            self.closing = True
+            return
+        if self.skin_changed() and not self.apply_skin():
+            return
+        if not self.restyled():
             self.closing = True
             return
         got = self.texts()

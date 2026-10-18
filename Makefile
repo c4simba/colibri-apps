@@ -3,11 +3,12 @@
 # (https://github.com/c4simba/plainpy: a release, its .deb/.rpm, or sudo make
 # install) with fasm on the PATH.
 #
-#   make                 every program, for KolibriOS: build/kolibrios/<name>
+#   make                 every program, for KolibriOS: build/kolibrios/<name>; Nectar's
+#                        skin for every window, nectar.skn and nectar.dtp (tools/mkskin.py)
 #   make nectar          one of them: nectar, startmenu, notify, counter, files, maps
 #   make test            the tests, compiled for this machine (TARGET=interp: in the interpreter)
-#   make dist            build/kolibrios-apps.zip: the programs, nectar.ini, how to install them;
-#                        build/release: a zip of each program with what it needs, the files one by one
+#   make dist            build/release: kolibrios-apps.zip (every program, nectar.ini, how to
+#                        install them) and a zip of each program with what it needs
 #   make run             KolibriOS in QEMU, build/kolibrios as its /hd0/1 (tools/run-kolibrios.sh)
 #
 #   PLAINPY=path/plainpy FASM=path/fasm other ones than those on the PATH
@@ -31,7 +32,9 @@ CACERT_URL = https://curl.se/ca/cacert.pem
 
 .PHONY: all test dist run clean tls $(APPS)
 
-all: $(addprefix $(OUT)/,$(APPS))
+SKIN = $(OUT)/nectar.skn
+
+all: $(addprefix $(OUT)/,$(APPS)) $(SKIN)
 $(APPS): %: $(OUT)/%
 
 # app(name, main file, its other sources): compiled with lib/ on the module path
@@ -48,6 +51,12 @@ $(eval $(call app,counter,apps/counter/counter.py,))
 $(eval $(call app,files,apps/files/files.py,))
 $(eval $(call app,maps,apps/maps/maps.py,$(MAPS_SRC)))
 
+# Nectar's skin (and its colors alone: nectar.dtp, made with it), by plainpy
+# from lib/kui/skin.py
+$(SKIN): tools/mkskin.py $(LIB_SRC)
+	@mkdir -p $(OUT)
+	PLAINPYPATH=lib $(PLAINPY) tools/mkskin.py $(OUT)
+
 # what maps' https needs next to it
 $(CACERT):
 	@mkdir -p $(BUILD)
@@ -60,12 +69,12 @@ tls: $(CACERT)
 test:
 	PLAINPY="$(PLAINPY)" FASM="$(FASM)" TARGET="$(TARGET)" sh tests/run_tests.sh
 
-# what a release carries (build/release): kolibrios-apps.zip - every program;
-# a zip of each program - a folder of its name with the program, what it needs
-# next to it and INSTALL.txt -; and the files one by one
+# what a release carries (build/release), zips only: kolibrios-apps.zip -
+# every program - and a zip of each program: a folder of its name with the
+# program, what it needs next to it and INSTALL.txt
 DIST = $(BUILD)/dist/kolibrios-apps
 ZIPS = nectar maps startmenu files counter
-ZIP_nectar    = nectar notify nectar.ini
+ZIP_nectar    = nectar notify nectar.ini nectar.skn nectar.dtp
 ZIP_maps      = maps cacert.pem $(if $(MBEDTLS),mbedtls.obj)
 ZIP_startmenu = startmenu
 ZIP_files     = files
@@ -73,14 +82,13 @@ ZIP_counter   = counter
 dist: all $(CACERT)
 	rm -rf $(DIST) $(BUILD)/release $(BUILD)/zips
 	mkdir -p $(DIST) $(BUILD)/release
-	cp $(addprefix $(OUT)/,$(APPS)) apps/nectar/nectar.ini INSTALL.txt $(CACERT) $(DIST)/
+	cp $(addprefix $(OUT)/,$(APPS)) $(OUT)/nectar.skn $(OUT)/nectar.dtp apps/nectar/nectar.ini INSTALL.txt $(CACERT) $(DIST)/
 	$(if $(MBEDTLS),cp $(MBEDTLS) $(DIST)/)
-	cd $(BUILD)/dist && rm -f ../kolibrios-apps.zip && zip -qr ../kolibrios-apps.zip kolibrios-apps
+	cd $(BUILD)/dist && zip -qr ../release/kolibrios-apps.zip kolibrios-apps
 	$(foreach z,$(ZIPS),mkdir -p $(BUILD)/zips/$(z) && cp $(addprefix $(DIST)/,$(ZIP_$(z)) INSTALL.txt) $(BUILD)/zips/$(z)/ && \
 		(cd $(BUILD)/zips && zip -qr ../release/$(z).zip $(z)) && ) true
-	cp $(BUILD)/kolibrios-apps.zip $(addprefix $(OUT)/,$(APPS)) apps/nectar/nectar.ini $(CACERT) $(BUILD)/release/
-	$(if $(MBEDTLS),cp $(MBEDTLS) $(BUILD)/release/,@echo "no MBEDTLS=path/mbedtls.obj: maps.zip goes without it (maps needs it next to it)")
-	@echo "built $(BUILD)/kolibrios-apps.zip and $(addsuffix .zip,$(ZIPS)) in $(BUILD)/release"
+	$(if $(MBEDTLS),,@echo "no MBEDTLS=path/mbedtls.obj: maps.zip goes without it (maps needs it next to it)")
+	@echo "built in $(BUILD)/release: kolibrios-apps.zip $(addsuffix .zip,$(ZIPS))"
 
 run: all tls
 	sh tools/run-kolibrios.sh $(OUT)

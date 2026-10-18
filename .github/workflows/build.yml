@@ -1,9 +1,9 @@
 # Builds the programs for KolibriOS with plainpy, runs the tests (in the
 # interpreter and compiled) and - for a tag v1.2.3 - publishes the release
-# 1.2.3: kolibrios-apps.zip, a zip of each program (nectar.zip, maps.zip ...:
-# the program and what it needs next to it) and every file on its own, under
-# the same names from release to release, so the latest is always at
-# https://github.com/<owner>/<repo>/releases/latest/download/<file>.
+# 1.2.3: kolibrios-apps.zip and a zip of each program (nectar.zip, maps.zip
+# ...: the program and what it needs next to it) - zips only -, under the
+# same names from release to release, so the latest is always at
+# https://github.com/<owner>/<repo>/releases/latest/download/<file>.zip.
 name: build
 
 on:

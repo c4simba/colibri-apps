@@ -42,6 +42,9 @@
 #              picture (card), a shape worked out once and laid down in any
 #              color (Stamp)
 #   glyphs     symbols drawn as strokes: power, restart, search, chevrons,
-#              arrows, a check mark, a network's bars, a speaker, a map's pin
+#              arrows, a check mark, a cross, a network's bars, a speaker, a
+#              map's pin
 #   icons      Icons: the system's icon strips (ICONS18, ICONS32), never scaled
+#   skin       a KolibriOS skin (.skn) and color table (.dtp) in this look and
+#              the accent chosen: every window of the system dressed as kui's
 from .window import Button, Window, window

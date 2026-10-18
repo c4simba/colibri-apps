@@ -14,6 +14,8 @@
 #   system        starting programs, finding the program's folder, other copies
 #   autorun       making Nectar the shell the system starts (autorun.dat,
 #                 the @notify stub)
+#   style         Nectar's skin on every window of the system (kui.skin in the
+#                 accent chosen, system.ini's [style] skin= for the next boot)
 #   theme         the shell's sizes and its own colors over kui's look
 #   menu/         the launcher: startpanel (the rail and the programs, its
 #                 rows' widgets), controller (kui's menus with the launcher),

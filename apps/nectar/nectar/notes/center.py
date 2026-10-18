@@ -19,7 +19,8 @@ from kui.widgets import TextButton
 from kui.draw import glow, centered, middle, digits_middle
 from kui.theme import BASE, RAISED, PLATE_DOWN, LINE_SOFT, SUNKEN, TEXT, TEXT_DIM, TEXT_FAINT, ACCENT
 from .note import Note, Notes
-from .card import text_lines, badge, bell, close_mark
+from .card import text_lines, badge, bell
+from kui.glyphs import cross
 
 WIDTH = 32                 # the bell's place on the bar
 BAR_BACK = 0x191C22        # (the bar's color there: nectar.theme's BAR near its top)
@@ -84,7 +85,7 @@ class DismissMark(Widget):
 
     def paint(self, cv: Canvas, row: Row, hot: bool, opened: bool) -> None:
         cv.round_rect(row.x, row.y, row.w, row.h, 6, PLATE_DOWN if hot else RAISED)
-        close_mark(cv, row.x + (row.w - 9) // 2, row.y + (row.h - 9) // 2, 9, TEXT if hot else TEXT_FAINT)
+        cross(cv, row.x + (row.w - 9) // 2, row.y + (row.h - 9) // 2, 9, TEXT if hot else TEXT_FAINT)
 
 def card_height(n: Note) -> int:
     lines = text_lines(n, SANS, lines_w(n), MOST_LINES)

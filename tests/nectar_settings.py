@@ -1,8 +1,8 @@
 # Nectar's settings without KolibriOS: nectar.ini's keys set in
 # place (with_keys), [bar] read, kui's look (kui.ini's [look], the accent's
 # palettes), the clock with seconds, and the settings card: what its clicks
-# and keys change and the files it would write - offscreen, no system call
-# made, nothing written.
+# and keys change (the windows' skin too) and the files it would write -
+# offscreen, no system call made, nothing written.
 from kgfx import Canvas
 from kui import look
 from kui.theme import PALETTES, PALETTE_NAMES, palette, ACCENT
@@ -11,7 +11,7 @@ from kui.panel import Row
 from kui.item import Item
 from nectar.config import parse_config, with_keys, flag
 from nectar.taskbar import clock
-from nectar.flyouts.settings import SettingsPanel, H, R_SWATCH, R_SIZE, R_SECONDS, R_NETWORK, R_INI, R_CANCEL, R_APPLY
+from nectar.flyouts.settings import SettingsPanel, H, R_SWATCH, R_SIZE, R_SECONDS, R_NETWORK, R_INI, R_CANCEL, R_APPLY, R_SKIN
 
 def checksum(cv: Canvas) -> int:
     total = 0
@@ -70,5 +70,9 @@ print("cancel", p.click(kinds.index(R_CANCEL)), p.closing)
 p.cv = Canvas(p.w + p.shadow, p.h + p.shadow)
 p.paint()
 print("drawn", checksum(p.cv))
+skinned = SettingsPanel(1, 600, 734, 1024, False, parse_config("", False), "/nonexistent")
+print("skin", skinned.skin, skinned.changed())
+skinned.click([r.kind for r in skinned.rows].index(R_SKIN))
+print("skin on", skinned.skin, skinned.changed(), skinned.skin_changed(), skinned.restyled())
 same = SettingsPanel(1, 600, 734, 1024, True, parse_config("", True), "/nonexistent")
 print("unchanged", same.changed(), same.click([r.kind for r in same.rows].index(R_APPLY)), same.closing, same.title)
