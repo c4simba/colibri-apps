@@ -1,13 +1,15 @@
-# The website (site/, with apps/nectar/screenshots/ and apps/maps/screenshots/) on GitHub Pages:
-# https://<owner>.github.io/<repository>/. Once, in the repository's
-# Settings -> Pages: Source "GitHub Actions". The page names the latest
-# release; a new release publishes it again.
+# The website (site/, with apps/nectar/screenshots/, apps/maps/screenshots/ and
+# apps/kstore/screenshots/) on GitHub Pages: https://<owner>.github.io/<repository>/.
+# Once, in the repository's Settings -> Pages: Source "GitHub Actions". The
+# page names the latest release; a new release publishes it again. site/kstore.json
+# is kstore's registry (written by tools/kstore_registry.py): a push of it
+# publishes it, kstore gets it from https://<owner>.github.io/<repository>/kstore.json.
 name: pages
 
 on:
   push:
     branches: [master, main]
-    paths: ['site/**', 'apps/nectar/screenshots/**', 'apps/maps/screenshots/**', '.github/workflows/pages.yml']
+    paths: ['site/**', 'apps/nectar/screenshots/**', 'apps/maps/screenshots/**', 'apps/kstore/screenshots/**', '.github/workflows/pages.yml']
   release:
     types: [published]
   workflow_dispatch:
@@ -29,15 +31,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: The page with its screenshots, this repository's links, the latest release
+      - name: The page with its screenshots, kstore's registry, this repository's links, the latest release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p _site
           cp site/* _site/
           cp -r apps/nectar/screenshots _site/screenshots
-          cp apps/maps/screenshots/* _site/screenshots/
-          sed -i "s|c4simba/colibri-apps|$GITHUB_REPOSITORY|g" _site/index.html
+          cp apps/maps/screenshots/* apps/kstore/screenshots/* _site/screenshots/
+          sed -i "s|c4simba/colibri-apps|$GITHUB_REPOSITORY|g" _site/index.html _site/kstore.json
           v=$(gh release view -R "$GITHUB_REPOSITORY" --json tagName -q .tagName 2>/dev/null || true)
           if [ -n "$v" ]; then
             sed -i "s|<!--release-->[^<]*<!--/release-->|latest: $v|" _site/index.html

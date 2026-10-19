@@ -7,7 +7,8 @@ KolibriOS executables - and what they are made of: **kui**, a UI toolkit,
 **Nectar**, a whole desktop - the taskbar with its launcher, the
 notification area and its flyouts, the desktop's shortcuts, the system's
 notifications - is the biggest of them; **Maps**, OpenStreetMap and the Earth
-from space over https, shows what plainpy's `requests` does on KolibriOS. The website, with the screenshots and
+from space over https, shows what plainpy's `requests` does on KolibriOS;
+**kstore** installs, updates and starts them from a list on the website. The website, with the screenshots and
 how to install it: **[c4simba.github.io/colibri-apps](https://c4simba.github.io/colibri-apps/)**.
 
 ![Nectar: the launcher with a submenu open](apps/nectar/screenshots/launcher.png)
@@ -23,6 +24,7 @@ folder of its name with the program, what it needs next to it and
 | [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them in one folder |
 | [nectar.zip](../../releases/latest/download/nectar.zip) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`): `nectar`, `notify` (the toasts' windows and what `@notify` hands them over with), `nectar.ini` (its settings) and `nectar.skn` / `nectar.dtp` (its skin for every window) |
 | [maps.zip](../../releases/latest/download/maps.zip) | Maps: a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: `maps`, `mbedtls.obj` (plainpy's TLS) and `cacert.pem` (the certificate authorities) |
+| [kstore.zip](../../releases/latest/download/kstore.zip) | kstore, the installer: the programs of a list on the website - Nectar, Maps, Files, plainpy, kstore itself - installed, updated, started: `kstore`, `mbedtls.obj` and `cacert.pem` |
 | [startmenu.zip](../../releases/latest/download/startmenu.zip) | Nectar's launcher alone, for the stock `@TASKBAR` |
 | [files.zip](../../releases/latest/download/files.zip) | a small file browser |
 | [counter.zip](../../releases/latest/download/counter.zip) | the smallest kui program |
@@ -301,13 +303,83 @@ non-commercial use, with its credit); the search from
 [Nominatim](https://operations.osmfoundation.org/policies/nominatim/) (one
 search a second at most).
 
+## kstore
+
+`apps/kstore/kstore.py` installs programs: the ones of a registry - a JSON
+file on the website, [site/kstore.json](site/kstore.json): Nectar, Maps,
+Files, plainpy (the interpreter and the compiler, plainpy's own release)
+and kstore itself -, got each time it starts (it keeps no copy). A card a
+program: its icon (the system's `icons32.png`), its name and version, what
+it is, and how it stands - **Install** when it is not there, **Update** (and
+**Run** the one there) when the registry's is newer, **Run** when it is not.
+Install downloads the program's zip over https (the bytes that have come
+drawn as they come), unpacks it - every file read and its CRC checked before
+the first one is written - into its folder and leaves the files the registry
+says to keep (Nectar's `nectar.ini`) as they were; Run starts the program in
+its folder (plainpy's opens a shell there). The keys: Up and Down choose a
+card, Enter presses its first button, PageUp / PageDown and the wheel
+scroll, R gets the list again.
+
+Which build is there is told by its binary's date: kstore writes each file
+with the time the archive gives it (as unzip does), and the registry has the
+time its archive gives the binary - a program older than that is offered the
+update. The programs go next to kstore's own folder: kstore in
+`/hd0/1/kstore` puts Maps into `/hd0/1/maps` (the zips' own layout: a folder
+of the program's name). It needs, as Maps does, `mbedtls.obj` and
+`cacert.pem` next to it (`kstore.zip` has both) and the network: started at
+boot, it waits until a network card has an address (a connection asked for
+before that hangs on KolibriOS).
+
+How it works: kstore, as Maps, starts itself again as its worker (`kstore
+--work <pid>`, `lib/worker.py`): the window asks it for the registry and the
+installs and draws what it tells - a line of text an IPC message (`store/jobs.py`
+lists them); one that is silent too long while it works is ended and
+another started. The package `apps/kstore/store/`: `registry` (the JSON read
+into dataclasses - compiled code reads JSON so -, written back, dates and
+what they say), `net`, `jobs`, `view`. The registry's address is built in:
+`make kstore KSTORE_REGISTRY=url` (default
+`https://c4simba.github.io/colibri-apps/kstore.json`).
+
+The registry is written by a tool in PlainPy, `tools/kstore_registry.py`
+(`make kstore-registry`: `build/kstore-registry`, compiled for this machine;
+or `PLAINPYPATH=lib:apps/kstore plainpy tools/kstore_registry.py ...`), and
+published with the website - `pages.yml` on a push:
+
+```sh
+build/kstore-registry list                   # the programs: name, version, date, size
+build/kstore-registry show maps              # every field of one
+build/kstore-registry add viewer https://.../viewer.zip title=Viewer icon=12 "about=..."
+build/kstore-registry set nectar keep=nectar.ini title_ru=Нектар
+build/kstore-registry move viewer 2          # its place in the list
+build/kstore-registry update                 # each archive downloaded: the binary's date, the size,
+                                             # the version (the release's tag the download is sent on to)
+git commit -am "kstore: new releases" && git push
+```
+
+A program's fields: `name`, `title` / `title_ru`, `about` / `about_ru`,
+`icon` (in `icons32.png`; -1: a tile with its letter), `version`, `date`,
+`size`, `url` (a zip), `strip` (leading folders of its names left out),
+`folder` (in kstore's root, or a path from `/`), `binary` (its program in
+the folder), `start` and `params` (what Run starts, if not the binary:
+plainpy's is `/sys/shell`), `keep` (files an update leaves as they are). A
+new release of these programs: tag it, wait for the release workflow, then
+`build/kstore-registry update` and push.
+
+What kstore is made of that other programs can use is in `lib/`: `worker`
+(the program started again without a window, text messages both ways over
+IPC), `unzip` (a zip into a folder on KolibriOS: names left out, files
+kept, the archive's times set, nothing written from a damaged archive) and
+`https` (is there a `mbedtls.obj` and a `cacert.pem`, has the network an
+address, a failed request's reason, short - Maps uses it too).
+
 ## kui
 
 kui is a toolkit for KolibriOS programs written in PlainPy, compiled or in the
 interpreter (plainpy runs on KolibriOS too). It has two levels. `kui.window`
 (what `import kui` gives) describes a window with decorators - a paint
 function, buttons, keys (`on_key`, `on_key_code`, `on_any_key`), clicks,
-double clicks, drags and their end, the wheel, IPC messages (`on_ipc`), UTF-8
+double clicks, drags and their end, the pointer over the window (`on_hover`),
+the wheel, IPC messages (`on_ipc`), UTF-8
 text, and `on_idle`: work done between events (a function that says when it
 wants to run again - at once, in n/100 s, or after the next event);
 `@window(..., sizable=True)` makes a window the user can resize and maximize,
@@ -340,7 +412,8 @@ counter.run()
 keyboard, mouse and wheel navigation and a panel with the entry's size,
 dates, attributes and the first lines - or bytes - of a file; and
 `apps/maps/maps.py`: a sizable window, drags, the wheel, a process of its own
-for the network, talked to by IPC.) Everything
+for the network, talked to by IPC; `apps/kstore/kstore.py`: the same with
+`lib/worker`, buttons lit under the pointer.) Everything
 else in kui is a drawn level, the one Nectar is made of. The interface is made of `lib/kui`, a toolkit for such programs. Every
 panel draws itself - its background, then each row through the widget the row
 carries (a menu item, a tab, a slider, the clock ...), so a new kind of row
@@ -349,14 +422,14 @@ is a small `Widget` subclass; a `Surface` is one window made of panels, and
 
 | `kui` module | |
 |---|---|
-| `window` | the decorator level: `@window(...)`, buttons, keys, clicks, drags, the wheel, idle work, sizable windows (`import kui`) |
+| `window` | the decorator level: `@window(...)`, buttons, keys, clicks, drags, the pointer's hover, the wheel, idle work, sizable windows (`import kui`) |
 | `theme`, `look`, `fonts`, `item` | the look (colors, gradients, sizes, the accent's palettes); `kui.ini`'s `[look]` (accent, text size); the fonts (the system's Tahoma or DejaVu); `Item`: a row of a menu |
 | `panel`, `surface` | `Panel`, `Row`, `Widget`; one window made of panels: shadows, corners over what is beneath, hot rows |
 | `menus`, `popup` | menus on a surface: hover delays, cascades, context menus, the keyboard; their panels and placing |
 | `flyout`, `tooltip`, `dialog` | a bar icon's panel; tooltips; a modal card over the dimmed screen with round choices |
 | `widgets`, `slider`, `chart` | separators, push and text buttons, tabs, check boxes, color swatches, `ListEntry` (a thing found: its name, and dim under it where it is); a slider; percents over time |
 | `textinput` | `LineEdit` (a line being typed: cp866 letters, the caret's keys, a paste), `TextField` (its field, scrolled to the caret), `SearchField` (one with a magnifier) |
-| `draw`, `band`, `glyphs`, `icons` | drawing helpers - `card` (a card floating over a picture, its shadow under the rounded corners too), `Stamp` (a shape worked out once, laid down in any color) -; a gradient per row; drawn symbols (power, restart, search, a cross, a map's pin ...); the system's icon strips |
+| `draw`, `band`, `glyphs`, `icons` | drawing helpers - `card` (a card floating over a picture, its shadow under the rounded corners too), `Stamp` (a shape worked out once, laid down in any color), `wrap` / `wrapped` / `ellipsized` (text to a width), `progress_bar` (the sheen over the part done) -; a gradient per row; drawn symbols (power, restart, search, a cross, a map's pin ...); the system's icon strips |
 | `skin` | a KolibriOS skin (`.skn`) and color table (`.dtp`) in kui's look and accent: what every window of the system wears |
 
 and the package `apps/nectar/nectar/` is the desktop's own, by what it is about:
@@ -426,6 +499,7 @@ differently).
   the wheel move, Enter or a double click opens, Backspace goes up.
 - `apps/counter`: a count, +1 and Reset (q closes it) - the smallest kui program.
 - `apps/maps`: the map of the world (above).
+- `apps/kstore`: the installer (above).
 
 A new program is a folder of `apps/` with its main file, a line of the
 `Makefile` (`$(eval $(call app,NAME,apps/NAME/NAME.py,))`) and, if it
@@ -438,16 +512,18 @@ What it takes: [plainpy](https://github.com/c4simba/plainpy) - a release
 `sudo make install` - and fasm on the PATH (`sudo apt install fasm`).
 
 ```sh
-make                    # build/kolibrios: nectar, startmenu, notify, counter, files, maps; nectar.skn, nectar.dtp
+make                    # build/kolibrios: nectar, startmenu, notify, counter, files, maps, kstore; nectar.skn, nectar.dtp
 make nectar             # one of them
 make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
 make dist               # build/release: kolibrios-apps.zip and a zip of each program
 make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/run-kolibrios.sh)
+make kstore-registry    # build/kstore-registry: the tool that writes site/kstore.json
 ```
 
-(`PLAINPY=path/plainpy`, `FASM=path/fasm` take others than those on the PATH.)
-`make dist` and `make run` put next to `maps` what its https needs:
+(`PLAINPY=path/plainpy`, `FASM=path/fasm` take others than those on the PATH;
+`KSTORE_REGISTRY=url` where kstore gets its registry.)
+`make dist` and `make run` put next to `maps` and `kstore` what their https needs:
 `cacert.pem` (curl.se's, downloaded into `build/`) and - with
 `MBEDTLS=path/mbedtls.obj` - plainpy's TLS library for KolibriOS (in plainpy's
 KolibriOS zip, or made by its `make kolibri-tls`); the release workflow takes
@@ -470,14 +546,18 @@ parameters, toasts, the bell and its list, `autorun.dat` made to start
 Nectar), `maps_view` the map (Web Mercator, the scale, the tiles from a
 made-up server - one that cannot be reached, one without the tile, one that
 answers nonsense -, previews, the window drawn, the places found, the
-layers), `kgfx_draw`, `jpeg_decode` and `kfont_glyphs` the graphics. `startmenu_kolibri` runs the stand-alone launcher on the scripted
+layers), `kstore_store` kstore (the registry read and written, dates and
+states, `lib/unzip` into a disk kept in memory, the worker's answers with a
+made-up network, the window drawn and what is at its points), `kgfx_draw`,
+`jpeg_decode` and `kfont_glyphs` the graphics. `startmenu_kolibri` runs the stand-alone launcher on the scripted
 KolibriOS of plainpy's `tests/x86run.py`:
 `TARGET=kolibri RUN="python3 <plainpy>/tests/x86run.py" make test`.
 
 GitHub Actions (`.github/workflows/build.yml`) builds and tests it on every
 push with plainpy's latest release; a tag `v1.2.3` publishes the release
 1.2.3 with the zips above. `.github/workflows/pages.yml` publishes the
-website - `site/index.html` with `apps/nectar/screenshots/` - on GitHub Pages
+website - `site/index.html` with `apps/nectar/screenshots/`, and kstore's
+registry `site/kstore.json` - on GitHub Pages
 (once, in the repository's Settings -> Pages: Source "GitHub Actions"),
 again for every release, which it names.
 
@@ -486,6 +566,7 @@ again for every release, which it names.
 ```text
 apps/nectar/          Nectar: desktop.py, startmenu.py, notify.py, the package nectar/, nectar.ini, screenshots/
 apps/maps/            Maps: maps.py, the package osmmap/, screenshots/
+apps/kstore/          kstore: kstore.py, the package store/
 apps/files/           the file browser
 apps/counter/         the smallest kui program
 lib/kui/              the toolkit
@@ -493,9 +574,13 @@ lib/kgfx.py           pictures, fonts, drawing (kgfx_sans.py, kgfx_tahoma.py: fo
 lib/png.py            PNG decoding
 lib/jpeg.py           JPEG decoding (baseline)
 lib/kfont.py          KolibriOS's .kf fonts as kgfx fonts
+lib/worker.py         a program's second process, without a window, and the messages between the two
+lib/unzip.py          a zip archive unpacked into a folder, the files' times kept
+lib/https.py          what a program going over https checks (TLS's files, the network) and says
 tests/                the tests and their expected outputs
-site/                 the website (GitHub Pages: .github/workflows/pages.yml)
-tools/                mkfont.py (TrueType fonts into kgfx modules), mkskin.py (Nectar's skin), run-kolibrios.sh (QEMU)
+site/                 the website and kstore.json, kstore's registry (GitHub Pages: .github/workflows/pages.yml)
+tools/                mkfont.py (TrueType fonts into kgfx modules), mkskin.py (Nectar's skin), run-kolibrios.sh (QEMU),
+                      kstore_registry.py (kstore's registry)
 ```
 
 `import kolibri` - the KolibriOS system functions - is plainpy's own

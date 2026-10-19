@@ -13,9 +13,11 @@
 # on that connection. OpenStreetMap's tile policy asks for a User-Agent that
 # says which program asks, Nominatim's for one search a second at most (a
 # person typing makes fewer). Whatever goes wrong becomes a FetchError (tiles)
-# or a SearchError (search) with a short reason for the status line.
+# or a SearchError (search) with a short reason for the status line (lib/https:
+# reason; ca_found - is there a cacert.pem - is from there too).
 import sys
 import requests
+from https import reason, ca_found
 from .tiles import FetchError
 from .places import Place
 
@@ -27,48 +29,11 @@ PHOTOS_CREDIT = "EOxCloudless https://cloudless.eox.at by EOX IT Services GmbH (
 SEARCH = "https://nominatim.openstreetmap.org/search"
 TIMEOUT = 20.0
 RESULTS = "6"              # places a search shows at most
-CA_FILE = "cacert.pem"     # where plainpy's ssl looks for it on KolibriOS: next to the program, then these
-CA_FOLDERS = ["/sys/settings/", "/kolibrios/etc/"]
 
 class SearchError(Exception):
     def __init__(self, message: str):
         super().__init__(message)
         self.message = message
-
-def reason(e: Exception) -> str:
-    """What went wrong, short: the system's words if requests' message has them
-    ("[Errno -2] Name or service not known"), else its first words."""
-    text = str(e)
-    at = text.find("[Errno")
-    if at >= 0:
-        end = len(text)
-        for stop in ["'", "\")", ")"]:
-            cut = text.find(stop, at)
-            if 0 <= cut < end:
-                end = cut
-        return text[at:end]
-    if len(text) > 90:
-        return text[:90] + "..."
-    return text
-
-def ca_found() -> bool:
-    """Is there a cacert.pem for ssl to trust the servers by? (Only KolibriOS
-    needs one: the other systems have their own authorities.)"""
-    if sys.platform != "kolibrios":
-        return True
-    here = sys.argv[0]
-    cut = here.rfind("/")
-    places = [here[:cut + 1] + CA_FILE] if cut >= 0 else []
-    for folder in CA_FOLDERS:
-        places.append(folder + CA_FILE)
-    for path in places:
-        try:
-            f = open(path, "rb")
-            f.close()
-            return True
-        except OSError:
-            pass
-    return False
 
 if sys._compiled:
     def places_of(r: requests.Response) -> list[Place]:

@@ -2,9 +2,9 @@
 # (plainpy --compile --target kolibri) or in the interpreter. Two levels:
 #
 #   window     a window described with decorators: a paint function,
-#              buttons, keys, clicks, drags, the wheel, work between events;
-#              fixed or sizable (kui exports Window, window; apps/counter,
-#              apps/files, apps/maps)
+#              buttons, keys, clicks, drags, the pointer's hover, the wheel,
+#              work between events; fixed or sizable (kui exports Window,
+#              window; apps/counter, apps/files, apps/maps, apps/kstore)
 #
 # and pieces drawn with kgfx in a look of their own - Nectar's graphite and
 # hummingbird's sheen - that apps/nectar, a whole desktop, is built of:
@@ -37,10 +37,11 @@
 #   slider     Slider
 #   chart      chart: percents over time
 #   band       Band: a gradient kept as a color per row
-#   draw       helpers: centered and shadowed text, glow, highlight, a
+#   draw       helpers: centered and shadowed text, text wrapped to a width
+#              or cut short (wrap, wrapped, ellipsized), glow, highlight, a
 #              picture pasted with rounded corners, a card floating over a
-#              picture (card), a shape worked out once and laid down in any
-#              color (Stamp)
+#              picture (card), a progress bar, a shape worked out once and
+#              laid down in any color (Stamp)
 #   glyphs     symbols drawn as strokes: power, restart, search, chevrons,
 #              arrows, a check mark, a cross, a network's bars, a speaker, a
 #              map's pin

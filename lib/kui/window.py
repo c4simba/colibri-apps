@@ -18,6 +18,7 @@
 #   @counter.on_click                          # left button: (x, y) in the window
 #   @counter.on_double_click
 #   @counter.on_drag                           # the pointer moved, the left button held
+#   @counter.on_hover                          # the pointer moved, no button held (where it is now)
 #   @counter.on_release                        # the left button let go (after a press inside)
 #   @counter.on_wheel                          # the wheel: steps, + is down
 #   @counter.on_ipc                            # an IPC message came (fn 60: the program's area)
@@ -74,6 +75,7 @@ class Window:
         self.clicks: list[Callable[[int, int], None]] = []
         self.double_clicks: list[Callable[[int, int], None]] = []
         self.drags: list[Callable[[int, int], None]] = []
+        self.hovers: list[Callable[[int, int], None]] = []
         self.releases: list[Callable[[int, int], None]] = []
         self.wheels: list[Callable[[int], None]] = []
         self.ipcs: list[Callable[[], None]] = []
@@ -123,6 +125,12 @@ class Window:
 
     def on_drag(self, handler: Callable[[int, int], None]) -> Callable[[int, int], None]:
         self.drags.append(handler)
+        return handler
+
+    def on_hover(self, handler: Callable[[int, int], None]) -> Callable[[int, int], None]:
+        """The pointer moved with no button held: where it is now (outside the
+        client area too - it left: nothing is under it any more)."""
+        self.hovers.append(handler)
         return handler
 
     def on_release(self, handler: Callable[[int, int], None]) -> Callable[[int, int], None]:
@@ -216,6 +224,9 @@ class Window:
         elif self.held and (x != self.last_x or y != self.last_y):
             for h in self.drags:
                 h(x, y)
+        elif not self.held and events & k.MOUSE_LEFT == 0 and (x != self.last_x or y != self.last_y):
+            for h in self.hovers:
+                h(x, y)
         if self.held and events & k.MOUSE_LEFT == 0:                 # (let go - also right after a quick press)
             self.held = False
             for h in self.releases:
@@ -240,7 +251,7 @@ class Window:
 
     def run(self) -> None:
         mask = k.EVM_REDRAW | k.EVM_KEY | k.EVM_BUTTON
-        if len(self.clicks) + len(self.double_clicks) + len(self.drags) + len(self.releases) + len(self.wheels) > 0:
+        if len(self.clicks) + len(self.double_clicks) + len(self.drags) + len(self.hovers) + len(self.releases) + len(self.wheels) > 0:
             mask |= k.EVM_MOUSE | k.EVM_MOUSE_ACTIVE_ONLY
         if len(self.ipcs) > 0:
             mask |= k.EVM_IPC

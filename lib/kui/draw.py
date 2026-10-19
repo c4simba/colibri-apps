@@ -1,15 +1,16 @@
 # kui.draw - small drawing helpers the components share: text over its
-# shadow, text centered in a row, the hover glow of the notification area,
-# the highlight of a menu row (the accent, deep, with a bright edge at its
-# left), a picture pasted with rounded, anti-aliased corners, a card floating
-# over a picture (a map's controls), and Stamp: a shape worked out once and
-# laid down as often as wanted, in any color.
+# shadow, text centered in a row, text wrapped to a width or cut short with an
+# ellipsis, the hover glow of the notification area, the highlight of a menu
+# row (the accent, deep, with a bright edge at its left), a picture pasted
+# with rounded, anti-aliased corners, a card floating over a picture (a map's
+# controls), a progress bar, and Stamp: a shape worked out once and laid down
+# as often as wanted, in any color.
 import math
 import kgfx
 from kgfx import Canvas, Font
 from typing import Callable
 from .panel import Row
-from .theme import HOT, ACCENT, RAISED, BASE, LINE
+from .theme import HOT, ACCENT, RAISED, BASE, LINE, SUNKEN, SHEEN
 
 CARD_SHADOW = 110          # a floating card's shadow (lighter than a menu's: it lies on a picture)
 
@@ -25,6 +26,50 @@ def centered(font: Font, text: str, x: int, w: int) -> int:
 def middle(font: Font, y: int, h: int) -> int:
     """Where a line of text starts when it is centered in y .. y + h."""
     return y + (h - font.height) // 2
+
+def wrap(font: Font, text: str, width: int) -> list[str]:
+    """A line of text as lines of at most width pixels, broken between words
+    (a word longer than that: where it has to)."""
+    out: list[str] = []
+    line = ""
+    for word in text.split(" "):
+        if word == "":
+            continue
+        joined = word if line == "" else line + " " + word
+        if font.width(joined) <= width:
+            line = joined
+            continue
+        if line != "":
+            out.append(line)
+        line = ""
+        for ch in word:
+            if line != "" and font.width(line + ch) > width:
+                out.append(line)
+                line = ""
+            line += ch
+    if line != "":
+        out.append(line)
+    return out
+
+def ellipsized(font: Font, s: str, width: int) -> str:
+    """s cut to fit width with an ellipsis after it (there is more)."""
+    dots = "…" if "…" in font.index else "..."
+    room = width - font.width(dots)
+    out = ""
+    for ch in s:
+        if font.width(out + ch) > room:
+            break
+        out += ch
+    return out.rstrip() + dots
+
+def wrapped(font: Font, text: str, width: int, most: int) -> list[str]:
+    """text wrapped to width, at most `most` lines (the last one cut short with
+    an ellipsis when there is more)."""
+    out = wrap(font, text, width)
+    if len(out) > most:
+        out = out[:most]
+        out[most - 1] = ellipsized(font, out[most - 1], width)
+    return out
 
 def digits_middle(font: Font, y: int, h: int) -> int:
     """Where a line of digits starts when the digits themselves - not the
@@ -109,6 +154,28 @@ def card(cv: Canvas, x: int, y: int, w: int, h: int, r: int, color: int = BASE) 
     cv.shadow(x, y, w - 3, h - 3, 9, CARD_SHADOW)
     cv.round_rect(x, y, w, h, r, color)
     cv.round_frame(x, y, w, h, r, LINE)
+
+def progress_bar(cv: Canvas, x: int, y: int, w: int, h: int, done: int, total: int, back: int = SUNKEN) -> None:
+    """A bar of how much is done: a sunken track, the accent's sheen over the
+    part done. total 0 (how much is not known): a stretch of the sheen at a
+    place that moves on with done (1/1000ths of the way round)."""
+    r = h // 2
+    cv.round_rect(x, y, w, h, r, back)
+    if total > 0:
+        fw = min(w, max(h, w * min(done, total) // total)) if done > 0 else 0
+        if fw > 0:
+            bar = Canvas(fw, h, back)
+            bar.gradient_stops(0, 0, fw, h, SHEEN, False)
+            paste_round(cv, bar, x, y, r, 15)
+        return
+    part = w // 4
+    at = (done % 1000) * (w + part) // 1000 - part
+    left = max(x, x + at)
+    right = min(x + w, x + at + part)
+    if right - left >= h:
+        bar = Canvas(right - left, h, back)
+        bar.gradient_stops(0, 0, right - left, h, SHEEN, False)
+        paste_round(cv, bar, left, y, r, 15)
 
 class Stamp:
     """A shape worked out once and laid on canvases as often as wanted, in any

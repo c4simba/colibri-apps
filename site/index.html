@@ -411,6 +411,7 @@ counter.run()</pre>
         <div class="sizes">
           <h3>What a release carries</h3>
           <div class="size-row"><span class="name">maps</span><span class="bar"><i style="width:100%"></i></span><span class="kb">175 KB</span></div>
+          <div class="size-row"><span class="name">kstore</span><span class="bar"><i style="width:99.4%"></i></span><span class="kb">174 KB</span></div>
           <div class="size-row"><span class="name">nectar</span><span class="bar"><i style="width:90.7%"></i></span><span class="kb">158 KB</span></div>
           <div class="size-row"><span class="name">startmenu</span><span class="bar"><i style="width:49.7%"></i></span><span class="kb">87 KB</span></div>
           <div class="size-row"><span class="name">files</span><span class="bar"><i style="width:16.3%"></i></span><span class="kb">28 KB</span></div>
@@ -538,6 +539,39 @@ w, h, pixels = png.decode(r.content)</pre>
   </div>
 </section>
 
+<section class="section" id="kstore">
+  <div class="wrap">
+    <p class="eyebrow">kstore</p>
+    <h2>Install, update, run — <span class="sheen-text">from a list on this website</span>.</h2>
+    <p class="section-lead">kstore gets the list of programs — Nectar, Maps, Files, plainpy and itself — from <a href="kstore.json"><code>kstore.json</code></a> here each time it starts, downloads a program's zip over https, unpacks it next to its own folder and starts it. A program older than the list's is offered the update; your settings stay as they were.</p>
+    <div class="split">
+      <div class="stack">
+        <div class="screen"><img src="screenshots/kstore.jpg" width="1024" height="768" loading="lazy" alt="kstore: Nectar and Maps installed, an update of Files offered, plainpy to install"></div>
+      </div>
+      <div>
+        <h3>Which build is there: its date</h3>
+        <p style="margin:0;color:var(--ink-2)">kstore writes every file with the time its archive gives it, as unzip does, and the list carries the time the archive gives the program — so the program's date says whether a newer one is out. The list is written by a small tool in PlainPy and published with the website; the downloads and the unpacking run in kstore's second process, the window draws how they go.</p>
+        <div class="code" style="margin-top:16px">
+          <div class="code-bar"><span class="file">shell</span><span>— a new release in the list</span></div>
+<pre><span class="p">$ </span>make kstore-registry
+<span class="p">$ </span>build/kstore-registry update
+maps: 0.2, 2026-10-18 15:39:52, 460143 bytes -&gt; 0.3, 2026-11-02 10:12:40, 471210 bytes
+<span class="p">$ </span>git commit -am <span class="s">"kstore: 0.3"</span> &amp;&amp; git push</pre>
+        </div>
+        <table class="flags">
+          <thead><tr><th>Keys</th><th>What they do</th></tr></thead>
+          <tbody>
+            <tr><td>Up · Down · Enter</td><td>choose a program · press its first button</td></tr>
+            <tr><td>wheel · PageUp · PageDown</td><td>scroll</td></tr>
+            <tr><td>R</td><td>get the list again</td></tr>
+          </tbody>
+        </table>
+        <p style="margin:16px 0 0;color:var(--ink-2)">Put the <code>kstore</code> folder of <code>kstore.zip</code> on a disk that stays — <code>/hd0/1/kstore</code> puts Maps into <code>/hd0/1/maps</code>.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
 <section class="section" id="install">
   <div class="wrap">
     <p class="eyebrow">Install</p>
@@ -555,6 +589,7 @@ w, h, pixels = png.decode(r.content)</pre>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/kolibrios-apps.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>kolibrios-apps.zip</b>all of them, nectar.ini, INSTALL.txt</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/nectar.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>nectar.zip</b>the desktop: nectar, notify, nectar.ini, its skin</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/maps.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>maps.zip</b>the map of the world, with its TLS files</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/kstore.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>kstore.zip</b>the installer: the others from a list, kept up to date</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/startmenu.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>startmenu.zip</b>the launcher alone, for the stock @TASKBAR</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/files.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>files.zip</b>a small file browser</span></a>
       <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/counter.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>counter.zip</b>the smallest kui program</span></a>
@@ -587,7 +622,7 @@ w, h, pixels = png.decode(r.content)</pre>
 <pre id="build-src">curl -LO https://github.com/c4simba/plainpy/releases/latest/download/plainpy_amd64.deb
 sudo apt install ./plainpy_amd64.deb fasm
 git clone https://github.com/c4simba/colibri-apps &amp;&amp; cd colibri-apps
-make                    <span class="c"># build/kolibrios: nectar, startmenu, notify, counter, files</span>
+make                    <span class="c"># build/kolibrios: nectar, startmenu, notify, counter, files, maps, kstore</span>
 make test               <span class="c"># the tests, compiled for this machine (TARGET=interp: in the interpreter)</span>
 make dist               <span class="c"># build/kolibrios-apps.zip</span>
 make run                <span class="c"># KolibriOS in QEMU with build/kolibrios as /hd0/1</span></pre>

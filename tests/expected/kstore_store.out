@@ -1,0 +1,105 @@
+3 ['maps', 'nectar', 'plainpy']
+maps 'Maps' 31 1 'maps' 'maps' [] '2026-10-18 15:39:52' 460143
+nectar '' -1 1 'nectar' 'nectar' ['nectar.ini'] '2026-10-18T15:39:52Z' 0
+plainpy '' -1 1 '/hd0/2/py/' 'plainpy' [] '' 0
+RegistryError JSON:
+0
+True
+{
+  "kstore": 1,
+  "apps": [
+    {
+      "name": "nectar",
+      "title": "",
+      "title_ru": "",
+      "about": "",
+      "about_ru": "",
+      "icon": -1,
+      "version": "",
+      "date": "2026-10-18T15:39:52Z",
+      "size": 0,
+      "url": "https://x/nectar.zip",
+      "strip": 1,
+      "folder": "nectar",
+      "binary": "nectar",
+      "start": "",
+      "params": "",
+      "keep": ["nectar.ini"]
+    }
+  ]
+}
+
+7 ['a.ini', 'b.ini'] 2026-01-02 03:04:05 Ёлка a.ini,b.ini True
+ValueError invalid literal for int(
+ValueError a date is YYYY-MM-DD HH:
+ValueError no such field: colour (t
+(2026, 10, 18, 15, 39, 52) 2026-10-18 15:39:52 True True True
+0 951868800 1792337992
+(0, 0, 0, 0, 0, 0) NEW
+(2026, 10, 18, 15, 39, 52) CURRENT
+(2026, 10, 18, 15, 39, 50) CURRENT
+(2026, 10, 18, 15, 39, 49) OLDER
+(2026, 10, 17, 23, 0, 0) OLDER
+(2027, 1, 1, 0, 0, 0) CURRENT
+True
+ 1 KB 449 KB 449 КБ 1.6 MB 1,6 МБ
+18.10.2026 2026-10-18 18.10.2026 15:39 2026-01-02 03:04
+Карты Maps plainpy Карта. ''
+/hd0/1/maps /hd0/1/maps/maps /hd0/1/maps/maps
+/hd0/1/nectar /hd0/1/nectar/nectar /hd0/1/nectar/nectar
+/hd0/2/py /hd0/2/py/plainpy /sys/shell
+'maps/' '' 'maps'
+'maps/maps' 'maps' 'maps/maps'
+'maps/docs/a.txt' 'docs/a.txt' 'maps/docs/a.txt'
+'./x/../y' ValueError a name that leaves the
+'/etc/passwd' ValueError a name that leaves the
+'c:/x' ValueError a name that leaves the
+'a\\..\\b' ValueError a name that leaves the
+'x' '' 'x'
+'x/' '' 'x'
+3 ['1/4', '2/4', '3/4', '4/4']
+['/hd0/1/maps', '/hd0/1/maps/docs']
+/hd0/1/maps/cacert.pem 960 (2026, 10, 18, 15, 40, 0) b'data of maps'
+/hd0/1/maps/docs/a.txt 960 (2026, 10, 18, 15, 40, 0) b'data of maps'
+/hd0/1/maps/maps 720 (2026, 10, 18, 15, 39, 52) b'data of maps'
+/hd0/1/maps/nectar.ini 4 - b'mine'
+4 ['/tmp0/1', '/tmp0/1/maps', '/tmp0/1/maps/docs'] ['/tmp0/1/maps/cacert.pem', '/tmp0/1/maps/docs/a.txt']
+ValueError a name that leaves the folder: 0 0
+BadZipFile damaged: maps/docs/a.txt 0
+BadZipFile File is not a zip fi
+'I nectar\thttps://x/nectar.zip\t1\t/hd0/1/nectar\tnectar.ini,a.ini' 'R https://r/kstore.json'
+nectar https://x/nectar.zip 1 /hd0/1/nectar ['nectar.ini', 'a.ini'] True True
+True ['R {"kstore": 1, "apps": []}']
+True ['r [Errno -2] Name or service not known']
+True ['P maps\td\tH\tN', 'P maps\td\tN\tN', 'P maps\tu\t1\t4', 'P maps\tu\t2\t4', 'P maps\tu\t3\t4', 'P maps\tu\t4\t4', 'D maps']
+True ['F files\tHTTP 404 Not Found']
+True ['F junk\tnot a zip archive: File is not a zip file']
+True []
+True []
+['/hd0/1/maps/cacert.pem', '/hd0/1/maps/docs/a.txt', '/hd0/1/maps/maps', '/hd0/1/maps/nectar.ini']
+False
+loading True 972010306
+trouble False 628211610
+['NEW', 'OLDER', 'CURRENT'] [['Install'], ['Update', 'Run'], ['Run']]
+104 69 321 340
+cards 885300219
+(580, 30) refresh -1
+(300, 5) nothing -1
+(40, 120) card 0
+(520, 120) main 0
+(520, 200) card 1
+(520, 240) card 1
+(520, 300) nothing -1
+(300, 410) nothing -1
+(5, 120) nothing -1
+(452, 243, 116, 30) (4, 1)
+busy True [] 664193783
+unpacking 736356284
+failed 648350947
+6 682 0
+5 361 True
+0
+True
+scrolled 156030847
+361 161 True
+['1 программа', '2 программы', '5 программ', '11 программ', '21 программа', '22 программы', '112 программ'] 1 program 4 programs

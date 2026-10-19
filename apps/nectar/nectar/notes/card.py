@@ -1,41 +1,18 @@
 # nectar.notes.card - a notification drawn (the toast and the bell's list
 # both): its symbol, drawn as strokes on a disc of its color - red for an
 # error, amber for a warning, green for done, blue for information, the
-# accent for the rest - its lines wrapped to the room there is, and the
-# bell of the notification area.
+# accent for the rest - its lines wrapped to the room there is (kui.draw's
+# wrap and ellipsized), and the bell of the notification area.
 import math
 import kgfx
 from kgfx import Canvas, Font
 from kui import glyphs
+from kui.draw import wrap, ellipsized
 from kui.theme import ACCENT, ACCENT_2, ACCENT_3, DANGER, WARN
 from .note import Note
 
 OK = 0x3DC47E
 FOLDER = 0xE0A94F
-
-def wrap(font: Font, text: str, width: int) -> list[str]:
-    """A line of text as lines of at most width pixels, broken between words
-    (a word longer than that: where it has to)."""
-    out: list[str] = []
-    line = ""
-    for word in text.split(" "):
-        if word == "":
-            continue
-        joined = word if line == "" else line + " " + word
-        if font.width(joined) <= width:
-            line = joined
-            continue
-        if line != "":
-            out.append(line)
-        line = ""
-        for ch in word:
-            if line != "" and font.width(line + ch) > width:
-                out.append(line)
-                line = ""
-            line += ch
-    if line != "":
-        out.append(line)
-    return out
 
 def text_lines(n: Note, font: Font, width: int, most: int) -> list[str]:
     """A notification's lines wrapped, at most `most` (the last one cut short
@@ -47,17 +24,6 @@ def text_lines(n: Note, font: Font, width: int, most: int) -> list[str]:
         out = out[:most]
         out[most - 1] = ellipsized(font, out[most - 1], width)
     return out
-
-def ellipsized(font: Font, s: str, width: int) -> str:
-    """s cut to fit width with an ellipsis after it (there is more)."""
-    dots = "…" if "…" in font.index else "..."
-    room = width - font.width(dots)
-    out = ""
-    for ch in s:
-        if font.width(out + ch) > room:
-            break
-        out += ch
-    return out.rstrip() + dots
 
 def tint(symbol: str) -> int:
     if symbol == "E":
