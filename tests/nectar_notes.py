@@ -2,7 +2,9 @@
 # escapes, flags, symbols), what notify passes on to the system's notifier,
 # the notifications the bell keeps, lines wrapped, a toast's card, the bell
 # and its list (dismissing, clearing, scrolling), and autorun.dat made to
-# start Nectar - offscreen, no system call made, nothing written.
+# start Nectar (and the shell it starts by another path: two copies written
+# into build/tests) - offscreen, no system call made.
+import os
 from kgfx import Canvas
 from kui.panel import Row
 from kui.item import Item
@@ -151,3 +153,11 @@ print(moved)
 print(autorun.as_default(b"/SYS/SETUP BOOT 0\n/SYS/@VOLUME \"\" 0\n\n# the end\n", "/hd0/1/nectar"))
 print(autorun.as_default(b"/sys/@taskbar\n", "/hd0/1/a-very-long-folder-name/nectar"))
 print([autorun.program_of(l) for l in [b"  # x", b"", b"; y", b"/SYS/@ICON\t\"\" 0", b" /sys/x  y"]])
+for folder in ["build/tests/kos", "build/tests/hd"]:             # (the same shell by two paths)
+    os.makedirs(folder, exist_ok=True)
+    f = open(folder + "/nectar", "wb")
+    f.write(b"MENUET01 the shell")
+    f.close()
+kos = autorun.as_default(STOCK, "build/tests/kos/nectar")
+print(autorun.started_as(kos, "build/tests/hd/nectar"), autorun.started_as(kos, "build/tests/none/nectar"),
+      autorun.started_as(STOCK, "build/tests/hd/nectar"), autorun.is_default(kos, autorun.started_as(kos, "build/tests/hd/nectar")))

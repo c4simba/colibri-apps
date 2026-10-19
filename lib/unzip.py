@@ -14,15 +14,27 @@
 # (ValueError) and a damaged archive (zipfile.BadZipFile) leave the folder
 # as it was.
 #
+# A 7z archive (is_7z) is unpacked by the system's own unpacker,
+# /sys/unz (archiver.obj: zip and 7z): extract_7z writes it next to the
+# folder, runs unz on it, waits for it and takes it away. unz unpacks it
+# whole (no folders left out), and a 7z's files need not carry times
+# (NetSurf's do not), so the binary is stamped with the time the caller
+# gives (an installer: the registry's); the files to keep are put back as
+# they were.
+#
 # Disk is where the files go: KolibriOS's file system (fn 70, fn 80 for
-# names out of ASCII). Anything with its methods does as well (the tests
-# keep the files in memory).
+# names out of ASCII) and its unpacker. Anything with its methods does as
+# well (the tests keep the files in memory).
 import io
 import sys
 import zlib
 import zipfile
 import kolibri as k
 from typing import Callable
+
+SEVEN_ZIP = b"7z\xbc\xaf\x27\x1c"      # how a 7z archive starts
+UNZ = "/sys/unz"                         # the system's unpacker
+UNZ_TIME = 900                           # seconds it may take
 
 class Disk:
     """KolibriOS's file system."""
@@ -32,6 +44,34 @@ class Disk:
 
     def exists(self, path: str) -> bool:
         return k.file_exists(path)
+
+    def read(self, path: str) -> bytes:
+        """A whole file (b"": it is not there)."""
+        try:
+            f = open(path, "rb")
+            data = f.read()
+            f.close()
+            return data
+        except OSError:
+            return b""
+
+    def delete(self, path: str) -> None:
+        k.delete_file(path)
+
+    def unpack(self, archive: str, folder: str, waiting: Callable[[int], None]) -> None:
+        """The system's unpacker run on archive into folder and waited for
+        (waiting(seconds) once a second). OSError: it could not be started, or
+        it did not end in UNZ_TIME seconds (it is ended)."""
+        pid = k.run_program(UNZ, "-o \"" + folder + "\" -h \"" + archive + "\"")
+        if pid < 0:
+            raise OSError("cannot start " + UNZ + " (error " + str(-pid) + ")")
+        for s in range(UNZ_TIME):
+            if k.slot_of_pid(pid) <= 0:
+                return
+            waiting(s)
+            k.delay(100)
+        k.kill_pid(pid)
+        raise OSError(UNZ + " did not end in " + str(UNZ_TIME // 60) + " minutes")
 
     def write(self, path: str, data: bytes) -> None:
         n = len(data)
@@ -142,6 +182,39 @@ def extract(data: bytes, folder: str, strip: int, keep: list[str], disk: Disk,
         disk.stamp(path, info.date_time)
         written += 1
     return written
+
+def is_7z(data: bytes) -> bool:
+    return data[:len(SEVEN_ZIP)] == SEVEN_ZIP
+
+def extract_7z(data: bytes, folder: str, keep: list[str], binary: str,
+               when: tuple[int, int, int, int, int, int], disk: Disk,
+               waiting: Callable[[int], None]) -> None:
+    """A 7z archive unpacked whole into folder by the system's unpacker:
+    written as folder.7z, unpacked, taken away. The files of keep that were
+    there are put back as they were; binary (a name in folder) is stamped
+    when (year 0: left as unz wrote it). ValueError: binary is not there
+    after it (a damaged archive, or not this program's); OSError: unz."""
+    folder = folder.rstrip("/")
+    archive = folder + ".7z"
+    kept: list[tuple[str, bytes]] = []
+    for name in keep:
+        path = folder + "/" + name
+        if disk.exists(path):
+            kept.append((path, disk.read(path)))
+    made: list[str] = []
+    _folder(disk, folder, made)
+    disk.write(archive, data)
+    try:
+        disk.unpack(archive, folder, waiting)
+    finally:
+        disk.delete(archive)
+        for f in kept:
+            disk.write(f[0], f[1])
+    program = folder + "/" + binary
+    if not disk.exists(program):
+        raise ValueError("no " + binary + " unpacked by " + UNZ + " (a damaged archive?)")
+    if when[0] > 0:
+        disk.stamp(program, when)
 
 def _folder(disk: Disk, path: str, made: list[str]) -> None:
     """Make path and the folders it is in (each asked for once)."""

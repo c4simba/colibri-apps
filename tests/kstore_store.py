@@ -4,14 +4,16 @@
 # sizes and dates as shown, where a program goes and what Run starts;
 # lib/unzip on an archive made here, into a disk kept in memory (the
 # archive's folder left out, settings kept, times set, names that climb out
-# and a damaged member refused before anything is written); the worker's
+# and a damaged member refused before anything is written); a 7z archive
+# through a made-up system unpacker (written next to the folder, taken away,
+# settings put back, the binary stamped); the worker's
 # requests and answers (store.jobs) with a network made up here; and the
 # window drawn - checksums, what is at its points, the buttons of each
 # state, scrolling.
 import io
 import zipfile
 from kgfx import Canvas
-from unzip import Disk, extract, target
+from unzip import Disk, extract, extract_7z, is_7z, target, SEVEN_ZIP
 from store import registry
 from store.registry import App, Registry, parse, dumps, stamp, date_text, seconds, state, size_text, day_text
 from store.registry import title, about, place, program, starts, set_field, text_field, NEW, OLDER, CURRENT, NOT_DATED
@@ -86,6 +88,7 @@ class MemoryDisk(Disk):
         self.files: dict[str, bytes] = {}
         self.times: dict[str, tuple[int, int, int, int, int, int]] = {}
         self.folders: list[str] = []
+        self.ran: list[str] = []
 
     def make_folder(self, path: str) -> None:
         self.folders.append(path)
@@ -102,6 +105,27 @@ class MemoryDisk(Disk):
 
     def modified(self, path: str) -> tuple[int, int, int, int, int, int]:
         return self.times[path] if path in self.times else NOT_DATED
+
+    def read(self, path: str) -> bytes:
+        return self.files[path] if path in self.files else b""
+
+    def delete(self, path: str) -> None:
+        if path in self.files:
+            self.files.pop(path)
+            self.ran.append("deleted " + path)
+
+    def unpack(self, archive: str, folder: str, waiting: Callable[[int], None]) -> None:
+        """A made-up unz: the archive after its signature is names, a line
+        each, written as files of their own names; "hang" never ends."""
+        self.ran.append("unz " + folder + " " + archive)
+        names = self.files[archive][len(SEVEN_ZIP):].decode().split("\n")
+        for i in range(3):
+            waiting(i)
+        if "hang" in names:
+            raise OSError("/sys/unz did not end in 15 minutes")
+        for name in names:
+            if name != "":
+                self.write(folder + "/" + name, b"unpacked " + name.encode())
 
 def archive(names: list[str], times: list[tuple[int, int, int, int, int, int]]) -> bytes:
     buf = io.BytesIO()
@@ -156,12 +180,39 @@ try:
 except zipfile.BadZipFile as e:
     print("BadZipFile", str(e)[:20])
 
+# ---- a 7z archive, by the system's unpacker
+seven = SEVEN_ZIP + b"netsurf\nlib/a.dll\nres/choices"
+print(is_7z(seven), is_7z(data), is_7z(b"7z"))
+disk = MemoryDisk()
+disk.files["/hd0/1/netsurf/res/choices"] = b"mine"
+waits: list[int] = []
+def wait(s: int) -> None:
+    waits.append(s)
+extract_7z(seven, "/hd0/1/netsurf/", ["res/choices", "gone.ini"], "netsurf", T1, disk, wait)
+print(disk.ran, waits, disk.folders)
+for path in sorted(disk.files.keys()):
+    print(path, disk.files[path], disk.times[path])
+disk = MemoryDisk()
+extract_7z(seven, "/hd0/1/netsurf", [], "netsurf", NOT_DATED, disk, wait)
+print(disk.times["/hd0/1/netsurf/netsurf"])
+for made in [SEVEN_ZIP + b"other", SEVEN_ZIP + b"netsurf\nhang"]:
+    disk = MemoryDisk()
+    try:
+        extract_7z(made, "/hd0/1/netsurf", [], "netsurf", T1, disk, wait)
+        print("extracted")
+    except ValueError as e:
+        print("ValueError", str(e), sorted(disk.files.keys()))
+    except OSError as e:
+        print("OSError", str(e), disk.ran[len(disk.ran) - 1])
+
 # ---- the worker's requests and answers
-job = Install("nectar", "https://x/nectar.zip", 1, "/hd0/1/nectar", ["nectar.ini", "a.ini"])
+job = Install("nectar", "https://x/nectar.zip", 1, "/hd0/1/nectar", ["nectar.ini", "a.ini"], "nectar",
+              "2026-10-18 15:39:52")
 text = install_request(job)
 print(repr(text), repr(registry_request("https://r/kstore.json")))
 back = parse_install(text)
-print(back.name, back.url, back.strip, back.folder, back.keep, parse_install("I a\tb") is None, parse_install("I a\tb\tx\td\t") is None)
+print(back.name, back.url, back.strip, back.folder, back.keep, back.binary, back.date, parse_install("I a\tb") is None,
+      parse_install("I a\tb\tx\td\t\tf\tg") is None, parse_install("I a\tb\t1\td\t") is None)
 
 class MadeUpNet(Net):
     """A network made up here: a registry, an archive, a server that fails."""
@@ -176,6 +227,8 @@ class MadeUpNet(Net):
             raise NetError("HTTP 404 Not Found")
         if "junk" in url:
             return b"<html>not here</html>"
+        if ".7z" in url:
+            return seven
         n = len(data)
         came(n // 2, n)
         came(n, n)
@@ -191,10 +244,13 @@ for request in [registry_request("https://r/kstore.json"), registry_request("htt
                 install_request(Install("maps", "https://x/maps.zip", 1, "/hd0/1/maps", [])),
                 install_request(Install("files", "https://x/missing.zip", 1, "/hd0/1/files", [])),
                 install_request(Install("junk", "https://x/junk.zip", 1, "/hd0/1/junk", [])),
+                install_request(Install("netsurf", "https://x/netsurf.7z", 0, "/hd0/1/netsurf", [], "netsurf",
+                                        "2026-09-27 02:27:47")),
+                install_request(Install("netsurf", "https://x/netsurf.7z", 1, "/hd0/1/netsurf", [], "netsurf", "")),
                 "Z what", "I broken"]:
     said = []
     print(answer(request, net, disk, say), [s.replace(str(len(data)), "N").replace(str(len(data) // 2), "H") for s in said])
-print(sorted(disk.files.keys()))
+print(sorted(disk.files.keys()), disk.times["/hd0/1/netsurf/netsurf"])
 def gone(text: str) -> bool:
     return False
 print(answer(install_request(Install("maps", "https://x/maps.zip", 1, "/hd0/1/maps2", [])), net, MemoryDisk(), gone))
@@ -238,6 +294,10 @@ e.done = 2
 e.total = 5
 view.render()
 print("unpacking", checksum(view.cv))
+e.done = 4
+e.total = 0
+view.render()
+print("unpacking by unz", checksum(view.cv))
 e.busy = False
 e.error = "Not installed: HTTP 404 Not Found"
 view.render()

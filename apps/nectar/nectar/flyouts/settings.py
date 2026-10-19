@@ -91,10 +91,11 @@ class SettingsPanel(Flyout):
         self.skin_on = style.is_on(here)     # the windows wear Nectar's skin
         self.skin = self.skin_on
         self.error = ""
-        self.program = system.own_path()     # what autorun.dat is to start
+        starts = system.read_bytes(autorun.AUTORUN)
+        self.program = autorun.started_as(starts, system.own_path())     # what autorun.dat is to start
         cut = self.program.rfind("/")
         self.notify = (self.program[:cut] if cut >= 0 else ".") + "/notify"
-        self.default = autorun.is_default(system.read_bytes(autorun.AUTORUN), self.program) and \
+        self.default = autorun.is_default(starts, self.program) and \
             autorun.notify_taken(self.notify)
         self.outcome: Outcome = None         # what "Make the default shell" did
         self.lay_out()

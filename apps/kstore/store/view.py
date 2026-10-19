@@ -329,6 +329,8 @@ class StoreView:
                 got = size_text(e.done, ru)
                 text = (("Скачиваю " if ru else "Downloading ") + got +
                         ((" из " if ru else " of ") + size_text(e.total, ru) if e.total > 0 else ""))
+            elif e.phase == "u" and e.total == 0:
+                text = "Распаковываю..." if ru else "Unpacking..."
             elif e.phase == "u":
                 text = ("Распаковываю: " if ru else "Unpacking: ") + str(e.done) + (" из " if ru else " of ") + str(e.total)
             elif self.ahead(e):
@@ -342,6 +344,8 @@ class StoreView:
                 done = e.done
                 if e.phase == "d" and e.total == 0:
                     done = e.done // 1024            # (how much is not known: a stretch that moves on)
+                elif e.phase == "u" and e.total == 0:
+                    done = e.done * 100              # (seconds: the stretch goes round in ten)
                 progress_bar(cv, bx, y + (SANS_SMALL.height - 6) // 2, x + room - bx, 6, done, e.total)
             return
         if e.error != "":

@@ -9,6 +9,9 @@
 #   make test            the tests, compiled for this machine (TARGET=interp: in the interpreter)
 #   make dist            build/release: kolibrios-apps.zip (every program, nectar.ini, how to
 #                        install them) and a zip of each program with what it needs
+#   make image           build/release/kolibrios-nectar-en.zip, -ru.zip: KolibriOS's own disk
+#                        image (builds.kolibrios.org) with Nectar the shell and kstore, the rest
+#                        of /kolibrios taken out - for QEMU (tools/mkimage.sh; IMAGE_LANGS=en_US)
 #   make run             KolibriOS in QEMU, build/kolibrios as its /hd0/1 (tools/run-kolibrios.sh)
 #   make kstore-registry build/kstore-registry: the tool that writes kstore's registry,
 #                        site/kstore.json (tools/kstore_registry.py), for this machine
@@ -37,7 +40,7 @@ CACERT_URL = https://curl.se/ca/cacert.pem
 KSTORE_REGISTRY ?= https://c4simba.github.io/colibri-apps/kstore.json
 GEN = $(BUILD)/gen
 
-.PHONY: all test dist run clean tls kstore-registry FORCE $(APPS)
+.PHONY: all test dist image run clean tls kstore-registry FORCE $(APPS)
 
 SKIN = $(OUT)/nectar.skn
 
@@ -112,6 +115,13 @@ dist: all $(CACERT)
 		(cd $(BUILD)/zips && zip -qr ../release/$(z).zip $(z)) && ) true
 	$(if $(MBEDTLS),,@echo "no MBEDTLS=path/mbedtls.obj: maps.zip and kstore.zip go without it (they need it next to them)")
 	@echo "built in $(BUILD)/release: kolibrios-apps.zip $(addsuffix .zip,$(ZIPS))"
+
+# KolibriOS's disk image with Nectar and kstore, a zip per language
+# (needs curl, bsdtar or 7z, mtools, unzip, zip)
+IMAGE_LANGS ?= en_US ru_RU
+image: dist
+	$(foreach l,$(IMAGE_LANGS),PLAINPY="$(PLAINPY)" sh tools/mkimage.sh $(l) \
+		$(BUILD)/release/kolibrios-nectar-$(firstword $(subst _, ,$(l))).zip $(BUILD)/release && ) true
 
 run: all tls
 	sh tools/run-kolibrios.sh $(OUT)

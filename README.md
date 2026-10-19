@@ -24,10 +24,11 @@ folder of its name with the program, what it needs next to it and
 | [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them in one folder |
 | [nectar.zip](../../releases/latest/download/nectar.zip) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`): `nectar`, `notify` (the toasts' windows and what `@notify` hands them over with), `nectar.ini` (its settings) and `nectar.skn` / `nectar.dtp` (its skin for every window) |
 | [maps.zip](../../releases/latest/download/maps.zip) | Maps: a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: `maps`, `mbedtls.obj` (plainpy's TLS) and `cacert.pem` (the certificate authorities) |
-| [kstore.zip](../../releases/latest/download/kstore.zip) | kstore, the installer: the programs of a list on the website - Nectar, Maps, Files, plainpy, kstore itself - installed, updated, started: `kstore`, `mbedtls.obj` and `cacert.pem` |
+| [kstore.zip](../../releases/latest/download/kstore.zip) | kstore, the installer: the programs of a list on the website - Nectar, Maps, Files, NetSurf, plainpy, kstore itself - installed, updated, started: `kstore`, `mbedtls.obj` and `cacert.pem` |
 | [startmenu.zip](../../releases/latest/download/startmenu.zip) | Nectar's launcher alone, for the stock `@TASKBAR` |
 | [files.zip](../../releases/latest/download/files.zip) | a small file browser |
 | [counter.zip](../../releases/latest/download/counter.zip) | the smallest kui program |
+| [kolibrios-nectar-en.zip](../../releases/latest/download/kolibrios-nectar-en.zip), [kolibrios-nectar-ru.zip](../../releases/latest/download/kolibrios-nectar-ru.zip) | KolibriOS itself with Nectar and kstore, a disk image to boot in QEMU (below) - the system in English, in Russian |
 
 To try Nectar, start `nectar` (from Eolite, say): it replaces the taskbar
 until the next boot. To keep it, put it (with `nectar.ini` and `notify`) on a
@@ -44,6 +45,38 @@ an image RDSAVE opens to save the image. By hand: make the line of
 ```
 
 (the line of `/SYS/@ICON` can go) and save the image (`RDSAVE`). Older releases: [all of them](../../releases).
+
+### Try it in QEMU
+
+`kolibrios-nectar-en.zip` (or `-ru`, the system in Russian) holds a disk
+image of KolibriOS - its nightly build, `latest-raw.7z` of
+[builds.kolibrios.org](https://builds.kolibrios.org): 128 MB, FAT32, boots
+through the BIOS and UEFI - with Nectar for its shell and kstore on the
+desktop, in the menu and pinned to the bar; about 4 MB zipped. The heavier
+programs of the official image (its `kolibrios` folder: games, emulators,
+their libraries - 95 MB) are left out, the system itself (the RAM disk,
+`kolibri.img`) is all there, and kstore installs Maps, Files, NetSurf and
+plainpy onto the same disk, which keeps them:
+
+```sh
+qemu-system-i386 -m 256 -drive file=kolibrios-nectar-en.img,format=raw -nic user,model=e1000 -device AC97
+```
+
+(`-nic`: the network, which kstore and Maps need; `-device AC97`: the sound;
+`-accel kvm` on Linux makes it faster.) Written whole to a USB stick, the
+image boots a computer. `make image` makes it (`tools/mkimage.sh`, for each of
+`IMAGE_LANGS`): the official image with its `kolibrios` folder emptied but for
+`res/system` (by which `SEARCHAP` finds it and mounts it as `/kolibrios`),
+the loaders for DOS and Windows and the docs gone; Nectar and kstore go into
+that folder - `/kolibrios/nectar`, `/kolibrios/kstore`, whatever disk the
+system booted from -, and `tools/mkimage.py` (in plainpy's interpreter, with
+Nectar's own `nectar.autorun`) changes the RAM disk: Nectar the shell -
+started once `SEARCHAP` has mounted the folder, which it waits for -,
+`@notify` handing the notifications to it, the desktop's shortcuts and the
+menu's items whose programs are gone left out (the NetSurf installer's too:
+kstore installs NetSurf), kstore added to both and pinned to the bar. The
+free room is zeroed so the zip is small; the release workflow makes both
+images for every release.
 
 ## Screenshots
 
@@ -307,7 +340,8 @@ search a second at most).
 
 `apps/kstore/kstore.py` installs programs: the ones of a registry - a JSON
 file on the website, [site/kstore.json](site/kstore.json): Nectar, Maps,
-Files, plainpy (the interpreter and the compiler, plainpy's own release)
+Files, NetSurf (the web browser: its latest build on KolibriOS's server),
+plainpy (the interpreter and the compiler, plainpy's own release)
 and kstore itself -, got each time it starts (it keeps no copy). A card a
 program: its icon (the system's `icons32.png`), its name and version, what
 it is, and how it stands - **Install** when it is not there, **Update** (and
@@ -323,7 +357,11 @@ scroll, R gets the list again.
 Which build is there is told by its binary's date: kstore writes each file
 with the time the archive gives it (as unzip does), and the registry has the
 time its archive gives the binary - a program older than that is offered the
-update. The programs go next to kstore's own folder: kstore in
+update. A 7z archive (NetSurf's) is handed to the system's own unpacker,
+`/sys/unz` (archiver.obj): written next to the folder, unpacked whole, taken
+away; a 7z's files need not carry times (NetSurf's do not), so kstore
+stamps the binary with the registry's date (for a 7z the registry's tool
+takes the server's `Last-Modified`). The programs go next to kstore's own folder: kstore in
 `/hd0/1/kstore` puts Maps into `/hd0/1/maps` (the zips' own layout: a folder
 of the program's name). It needs, as Maps does, `mbedtls.obj` and
 `cacert.pem` next to it (`kstore.zip` has both) and the network: started at
@@ -517,6 +555,7 @@ make nectar             # one of them
 make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
 make dist               # build/release: kolibrios-apps.zip and a zip of each program
+make image              # build/release: kolibrios-nectar-en.zip, -ru.zip - KolibriOS with Nectar and kstore
 make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/run-kolibrios.sh)
 make kstore-registry    # build/kstore-registry: the tool that writes site/kstore.json
 ```
@@ -554,8 +593,8 @@ KolibriOS of plainpy's `tests/x86run.py`:
 `TARGET=kolibri RUN="python3 <plainpy>/tests/x86run.py" make test`.
 
 GitHub Actions (`.github/workflows/build.yml`) builds and tests it on every
-push with plainpy's latest release; a tag `v1.2.3` publishes the release
-1.2.3 with the zips above. `.github/workflows/pages.yml` publishes the
+push with plainpy's latest release and makes the disk images; a tag `v1.2.3`
+publishes the release 1.2.3 with the zips above. `.github/workflows/pages.yml` publishes the
 website - `site/index.html` with `apps/nectar/screenshots/`, and kstore's
 registry `site/kstore.json` - on GitHub Pages
 (once, in the repository's Settings -> Pages: Source "GitHub Actions"),
@@ -580,7 +619,8 @@ lib/https.py          what a program going over https checks (TLS's files, the n
 tests/                the tests and their expected outputs
 site/                 the website and kstore.json, kstore's registry (GitHub Pages: .github/workflows/pages.yml)
 tools/                mkfont.py (TrueType fonts into kgfx modules), mkskin.py (Nectar's skin), run-kolibrios.sh (QEMU),
-                      kstore_registry.py (kstore's registry)
+                      kstore_registry.py (kstore's registry), mkimage.sh, mkimage.py, image-readme.txt
+                      (KolibriOS's disk image with Nectar and kstore)
 ```
 
 `import kolibri` - the KolibriOS system functions - is plainpy's own

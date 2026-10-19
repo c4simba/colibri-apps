@@ -320,6 +320,7 @@ dialog.lightbox p { margin: 10px 2px 0; color: #c9d1db; font-size: 14.5px; text-
       <a class="hide-sm" href="#plainpy">How it's built</a>
       <a class="hide-sm" href="#screens">Screenshots</a>
       <a class="hide-sm" href="#notifications">Notifications</a>
+      <a href="#try">Try it</a>
       <a href="#install">Install</a>
       <a class="hide-sm" href="https://github.com/c4simba/colibri-apps">GitHub</a>
       <button class="theme-btn" type="button" aria-label="Light or dark page">
@@ -347,6 +348,7 @@ dialog.lightbox p { margin: 10px 2px 0; color: #c9d1db; font-size: 14.5px; text-
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
           Download kolibrios-apps.zip
         </a>
+        <a class="btn" href="#try">Try it in QEMU</a>
         <a class="btn" href="#install">How to install</a>
       </div>
       <p class="hero-note">Graphite surfaces, soft corners, a hummingbird's sheen for an accent — and KolibriOS's own Tahoma.</p>
@@ -543,7 +545,7 @@ w, h, pixels = png.decode(r.content)</pre>
   <div class="wrap">
     <p class="eyebrow">kstore</p>
     <h2>Install, update, run — <span class="sheen-text">from a list on this website</span>.</h2>
-    <p class="section-lead">kstore gets the list of programs — Nectar, Maps, Files, plainpy and itself — from <a href="kstore.json"><code>kstore.json</code></a> here each time it starts, downloads a program's zip over https, unpacks it next to its own folder and starts it. A program older than the list's is offered the update; your settings stay as they were.</p>
+    <p class="section-lead">kstore gets the list of programs — Nectar, Maps, Files, NetSurf, plainpy and itself — from <a href="kstore.json"><code>kstore.json</code></a> here each time it starts, downloads a program's archive over https, unpacks it next to its own folder and starts it. A program older than the list's is offered the update; your settings stay as they were. NetSurf, the web browser, comes straight from KolibriOS's server, its latest build — a 7z archive, which the system's own <code>unz</code> unpacks.</p>
     <div class="split">
       <div class="stack">
         <div class="screen"><img src="screenshots/kstore.jpg" width="1024" height="768" loading="lazy" alt="kstore: Nectar and Maps installed, an update of Files offered, plainpy to install"></div>
@@ -569,6 +571,31 @@ maps: 0.2, 2026-10-18 15:39:52, 460143 bytes -&gt; 0.3, 2026-11-02 10:12:40, 471
         <p style="margin:16px 0 0;color:var(--ink-2)">Put the <code>kstore</code> folder of <code>kstore.zip</code> on a disk that stays — <code>/hd0/1/kstore</code> puts Maps into <code>/hd0/1/maps</code>.</p>
       </div>
     </div>
+  </div>
+</section>
+
+<section class="section" id="try">
+  <div class="wrap">
+    <p class="eyebrow">Try it</p>
+    <h2>KolibriOS with Nectar, <span class="sheen-text">ready to boot in QEMU</span>.</h2>
+    <p class="section-lead">A disk image of KolibriOS — its nightly build from <a href="https://builds.kolibrios.org">builds.kolibrios.org</a> — with Nectar for its shell and kstore on the desktop, in the menu and on the bar: a zip of about 4 MB, a disk of 128 MB. The heavier programs of the official image — games, emulators, their libraries — are left out; the system itself is all there, and kstore installs Maps, Files, NetSurf and plainpy onto the same disk, which keeps them.</p>
+    <div class="downloads">
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/kolibrios-nectar-en.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>kolibrios-nectar-en.zip</b>the image, the system in English, README.txt</span></a>
+      <a class="dl" href="https://github.com/c4simba/colibri-apps/releases/latest/download/kolibrios-nectar-ru.zip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg><span><b>kolibrios-nectar-ru.zip</b>the same, the system in Russian</span></a>
+    </div>
+    <ol class="steps">
+      <li><h3>Install QEMU</h3><p>Linux: the package <code>qemu-system-x86</code> (apt, dnf, pacman: <code>qemu-system-x86</code> or <code>qemu</code>); macOS: <code>brew install qemu</code>; Windows: the installer from <a href="https://qemu.weilnetz.de/w64/">qemu.weilnetz.de</a>.</p></li>
+      <li><h3>Unpack the zip and start the image</h3><p>In the folder with the image:</p>
+        <div class="code">
+          <div class="code-bar"><span class="file">shell</span>
+            <button class="copy" type="button" aria-label="Copy the command" data-copy="qemu-src"><svg class="clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7"/></svg></button>
+          </div>
+<pre id="qemu-src">qemu-system-i386 -m 256 -drive file=kolibrios-nectar-en.img,format=raw -nic user,model=e1000 -device AC97</pre>
+        </div>
+        <p style="margin-top:12px"><code>-nic</code> gives it the network — kstore and Maps need it —, <code>-device AC97</code> the sound; on Linux <code>-accel kvm</code> makes it faster. On Windows the same line goes after <code>"C:\Program Files\qemu\qemu-system-i386.exe"</code>. For the Russian system: <code>kolibrios-nectar-ru.img</code>.</p></li>
+      <li><h3>Open kstore</h3><p>The box on the bar, or KSTORE on the desktop. Install puts a program next to Nectar and kstore, in the disk's <code>kolibrios</code> folder (<code>/kolibrios</code>), and Run starts it. What you install, set or save stays in the image — unpack the zip again to start afresh.</p></li>
+    </ol>
+    <p style="margin:16px 0 0;color:var(--ink-2)">On a computer: the image written whole to a USB stick — <code>dd</code>, Rufus, balenaEtcher; whatever was on the stick is lost — boots through the BIOS or UEFI. The image is made by <code>make image</code> (<code>tools/mkimage.sh</code>) from the official <code>latest-raw.7z</code>, for every release.</p>
   </div>
 </section>
 
@@ -624,7 +651,8 @@ sudo apt install ./plainpy_amd64.deb fasm
 git clone https://github.com/c4simba/colibri-apps &amp;&amp; cd colibri-apps
 make                    <span class="c"># build/kolibrios: nectar, startmenu, notify, counter, files, maps, kstore</span>
 make test               <span class="c"># the tests, compiled for this machine (TARGET=interp: in the interpreter)</span>
-make dist               <span class="c"># build/kolibrios-apps.zip</span>
+make dist               <span class="c"># build/release: kolibrios-apps.zip and a zip of each program</span>
+make image              <span class="c"># build/release: kolibrios-nectar-en.zip, -ru.zip (KolibriOS with Nectar and kstore)</span>
 make run                <span class="c"># KolibriOS in QEMU with build/kolibrios as /hd0/1</span></pre>
     </div>
   </div>

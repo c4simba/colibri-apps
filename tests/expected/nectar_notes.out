@@ -55,3 +55,4 @@ b'# Syntaxis is: <Program_Name> <Parameter(s)> <Delay_Time>\r\n#/SYS/DEVELOP/BOA
 b'/SYS/SETUP BOOT 0\n/SYS/@VOLUME "" 0\n/hd0/1/nectar           ""   0\t# Nectar: the taskbar, the launcher, the desktop\'s icons, notifications\n\n# the end\n'
 b'/hd0/1/a-very-long-folder-name/nectar ""   0\t# Nectar: the taskbar, the launcher, the desktop\'s icons, notifications\n'
 [b'', b'', b'', b'/SYS/@ICON', b'/sys/x']
+build/tests/kos/nectar build/tests/none/nectar build/tests/hd/nectar True

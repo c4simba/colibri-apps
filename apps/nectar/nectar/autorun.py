@@ -85,6 +85,22 @@ def replaced(data: bytes) -> list[str]:
             out.append(parts[len(parts) - 1].decode())
     return out
 
+def started_as(data: bytes, program: str) -> str:
+    """The path autorun.dat starts this shell by: program - or another path
+    to the same file, which is kept (/kolibrios/nectar/nectar, the folder
+    SEARCHAP mounts, for /hd0/1/kolibrios/nectar/nectar: the system gives a
+    program its path on the disk)."""
+    mine = file_name(program.encode())
+    for row in data.split(b"\n"):
+        p = program_of(row)
+        if p != b"" and file_name(p) == mine and p != program.encode() and same_file(p.decode(), program):
+            return p.decode()
+    return program
+
+def same_file(a: str, b: str) -> bool:
+    there = read_bytes(a)
+    return len(there) > 0 and there == read_bytes(b)
+
 def is_default(data: bytes, program: str) -> bool:
     return len(data) > 0 and as_default(data, program) == data
 

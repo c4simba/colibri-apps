@@ -6,7 +6,8 @@
 #   net        the registry's text and the programs' archives over https
 #              (plainpy's requests), a piece at a time
 #   jobs       what the worker does - the registry got, a program installed
-#              (lib/unzip) - and the lines of text that ask and tell how it goes
+#              (lib/unzip: a zip, or a 7z by the system's /sys/unz) - and the
+#              lines of text that ask and tell how it goes
 #   view       the window drawn: the programs' cards, their buttons, how an
 #              install goes; what is at a point of it
 #

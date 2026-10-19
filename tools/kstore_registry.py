@@ -15,8 +15,9 @@
 #   kstore-registry move NAME PLACE               its place in the list (1: the first)
 #   kstore-registry update [NAME ...]             each program's archive downloaded (all of them:
 #                                                 none named) and read: its date (the time it gives
-#                                                 the binary), its size, its version (the release's
-#                                                 tag in the address the download is sent on to)
+#                                                 the binary; a 7z: the server's Last-Modified - kstore
+#                                                 stamps the binary with it), its size, its version (the
+#                                                 release's tag in the address the download is sent on to)
 #
 # -f FILE before the command: another registry than site/kstore.json. What
 # changed is written back to the file. update downloads over https (plainpy's
@@ -26,7 +27,7 @@ import io
 import sys
 import zipfile
 import requests
-from unzip import target
+from unzip import target, is_7z
 from store.registry import Registry, App, RegistryError, FIELDS, parse, dumps, find, text_field, set_field, date_text
 
 FILE = "site/kstore.json"
@@ -104,6 +105,18 @@ def tag_of(r: requests.Response) -> str:
             return tag[1:] if tag.startswith("v") and len(tag) > 1 and tag[1].isdigit() else tag
     return ""
 
+MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+
+def last_modified(r: requests.Response) -> str:
+    """The server's Last-Modified as a date of the registry ("Sun, 27 Sep
+    2026 02:27:47 GMT": "2026-09-27 02:27:47"); "": none."""
+    f = r.headers.get("last-modified", "").split(" ")
+    if len(f) != 6 or f[2] not in MONTHS:
+        return ""
+    day = f[1] if len(f[1]) == 2 else "0" + f[1]
+    month = MONTHS.index(f[2]) + 1
+    return f[3] + "-" + ("0" if month < 10 else "") + str(month) + "-" + day + " " + f[4]
+
 def refresh(app: App, session: requests.Session) -> str:
     """Date, size and version from the program's archive; what changed, as a line."""
     try:
@@ -113,6 +126,21 @@ def refresh(app: App, session: requests.Session) -> str:
     if r.status_code != 200:
         raise ToolError(app.name + ": HTTP " + str(r.status_code) + " " + r.reason + " (" + app.url + ")")
     data = r.content
+    if is_7z(data):
+        date = seven_zip_date(app, r)
+    else:
+        date = zip_date(app, data)
+    was = summary(app) if app.date != "" else "not read before"
+    app.date = date
+    app.size = len(data)
+    tag = tag_of(r)
+    if tag != "":
+        app.version = tag
+    now = summary(app)
+    return app.name + ": " + (now + " (as it was)" if now == was else was + " -> " + now)
+
+def zip_date(app: App, data: bytes) -> str:
+    """The time the archive gives the binary."""
     try:
         z = zipfile.ZipFile(io.BytesIO(data))
     except zipfile.BadZipFile as e:
@@ -126,14 +154,18 @@ def refresh(app: App, session: requests.Session) -> str:
             raise ToolError(app.name + ": " + str(e))
     if date == "":
         raise ToolError(app.name + ": the archive has no " + app.binary + " (strip " + str(app.strip) + ")")
-    was = summary(app) if app.date != "" else "not read before"
-    app.date = date
-    app.size = len(data)
-    tag = tag_of(r)
-    if tag != "":
-        app.version = tag
-    now = summary(app)
-    return app.name + ": " + (now + " (as it was)" if now == was else was + " -> " + now)
+    return date
+
+def seven_zip_date(app: App, r: requests.Response) -> str:
+    """A 7z (unpacked whole by the system's unz; its files need not carry
+    times, and kstore stamps the binary with this one): the time the server
+    says it changed."""
+    if app.strip != 0:
+        raise ToolError(app.name + ": a 7z archive is unpacked whole: set strip=0")
+    date = last_modified(r)
+    if date == "":
+        raise ToolError(app.name + ": a 7z archive, and no Last-Modified to date it by")
+    return date
 
 def summary(app: App) -> str:
     return (app.version + ", " if app.version != "" else "") + app.date + ", " + str(app.size) + " bytes"

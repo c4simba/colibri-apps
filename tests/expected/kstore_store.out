@@ -67,16 +67,26 @@ True
 ValueError a name that leaves the folder: 0 0
 BadZipFile damaged: maps/docs/a.txt 0
 BadZipFile File is not a zip fi
-'I nectar\thttps://x/nectar.zip\t1\t/hd0/1/nectar\tnectar.ini,a.ini' 'R https://r/kstore.json'
-nectar https://x/nectar.zip 1 /hd0/1/nectar ['nectar.ini', 'a.ini'] True True
+True False False
+['unz /hd0/1/netsurf /hd0/1/netsurf.7z', 'deleted /hd0/1/netsurf.7z'] [0, 1, 2] ['/hd0/1/netsurf']
+/hd0/1/netsurf/lib/a.dll b'unpacked lib/a.dll' (2000, 1, 1, 0, 0, 0)
+/hd0/1/netsurf/netsurf b'unpacked netsurf' (2026, 10, 18, 15, 39, 52)
+/hd0/1/netsurf/res/choices b'mine' (2000, 1, 1, 0, 0, 0)
+(2000, 1, 1, 0, 0, 0)
+ValueError no netsurf unpacked by /sys/unz (a damaged archive?) ['/hd0/1/netsurf/other']
+OSError /sys/unz did not end in 15 minutes deleted /hd0/1/netsurf.7z
+'I nectar\thttps://x/nectar.zip\t1\t/hd0/1/nectar\tnectar.ini,a.ini\tnectar\t2026-10-18 15:39:52' 'R https://r/kstore.json'
+nectar https://x/nectar.zip 1 /hd0/1/nectar ['nectar.ini', 'a.ini'] nectar 2026-10-18 15:39:52 True True True
 True ['R {"kstore": 1, "apps": []}']
 True ['r [Errno -2] Name or service not known']
 True ['P maps\td\tH\tN', 'P maps\td\tN\tN', 'P maps\tu\t1\t4', 'P maps\tu\t2\t4', 'P maps\tu\t3\t4', 'P maps\tu\t4\t4', 'D maps']
 True ['F files\tHTTP 404 Not Found']
 True ['F junk\tnot a zip archive: File is not a zip file']
+True ['P netsurf\tu\t0\t0', 'P netsurf\tu\t1\t0', 'P netsurf\tu\t2\t0', 'D netsurf']
+True ['F netsurf\ta 7z archive is unpacked whole: strip 0']
 True []
 True []
-['/hd0/1/maps/cacert.pem', '/hd0/1/maps/docs/a.txt', '/hd0/1/maps/maps', '/hd0/1/maps/nectar.ini']
+['/hd0/1/maps/cacert.pem', '/hd0/1/maps/docs/a.txt', '/hd0/1/maps/maps', '/hd0/1/maps/nectar.ini', '/hd0/1/netsurf/lib/a.dll', '/hd0/1/netsurf/netsurf', '/hd0/1/netsurf/res/choices'] (2026, 9, 27, 2, 27, 47)
 False
 loading True 972010306
 trouble False 628211610
@@ -95,6 +105,7 @@ cards 885300219
 (452, 243, 116, 30) (4, 1)
 busy True [] 664193783
 unpacking 736356284
+unpacking by unz 299523318
 failed 648350947
 6 682 0
 5 361 True

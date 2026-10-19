@@ -56,6 +56,24 @@
       "keep": []
     },
     {
+      "name": "netsurf",
+      "title": "NetSurf",
+      "title_ru": "",
+      "about": "A web browser: pages with their styles and pictures, over http and https - the latest build on KolibriOS's server (ftp.kolibrios.org).",
+      "about_ru": "Веб-браузер: страницы с оформлением и картинками, по http и https - последняя сборка с сервера KolibriOS (ftp.kolibrios.org).",
+      "icon": 125,
+      "version": "",
+      "date": "2026-09-27 02:27:47",
+      "size": 8660843,
+      "url": "https://ftp.kolibrios.org/users/Leency/netsurf/netsurf.zip",
+      "strip": 0,
+      "folder": "netsurf",
+      "binary": "netsurf",
+      "start": "",
+      "params": "",
+      "keep": []
+    },
+    {
       "name": "plainpy",
       "title": "plainpy",
       "title_ru": "",

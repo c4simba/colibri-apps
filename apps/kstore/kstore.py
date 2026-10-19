@@ -1,8 +1,9 @@
 # kstore - an installer of programs for KolibriOS: the programs of a
 # registry - a JSON file on a web page (site/kstore.json on GitHub Pages:
-# Nectar, Maps, Files, plainpy, kstore itself), got each time it starts - each
-# on a card with what it is and how it stands. Install downloads its archive
-# over https and unpacks it into its folder; a program there older than the
+# Nectar, Maps, Files, NetSurf, plainpy, kstore itself), got each time it
+# starts - each on a card with what it is and how it stands. Install
+# downloads its archive over https and unpacks it into its folder (a zip
+# itself, a 7z by the system's /sys/unz); a program there older than the
 # registry's (its binary's date says so) can be updated; Run starts it. The
 # code is the package store/ (see store/__init__.py); the window is kui's.
 #
@@ -117,7 +118,8 @@ def install(e: Entry) -> None:
     e.done = 0
     e.total = 0
     e.error = ""
-    ask(jobs.install_request(Install(e.app.name, e.app.url, e.app.strip, e.folder, e.app.keep)))
+    ask(jobs.install_request(Install(e.app.name, e.app.url, e.app.strip, e.folder, e.app.keep, e.app.binary,
+                                     e.app.date)))
     changed()
 
 def start(e: Entry) -> None:

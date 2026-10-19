@@ -1,8 +1,11 @@
 # Builds the programs for KolibriOS with plainpy, runs the tests (in the
-# interpreter and compiled) and - for a tag v1.2.3 - publishes the release
-# 1.2.3: kolibrios-apps.zip and a zip of each program (nectar.zip, maps.zip,
-# kstore.zip ...: the program and what it needs next to it) - zips only -, under the
-# same names from release to release, so the latest is always at
+# interpreter and compiled), makes KolibriOS's disk image with Nectar and
+# kstore (make image: builds.kolibrios.org's latest-raw.7z, en_US and ru_RU)
+# and - for a tag v1.2.3 - publishes the release 1.2.3: kolibrios-apps.zip,
+# a zip of each program (nectar.zip, maps.zip, kstore.zip ...: the program and
+# what it needs next to it) and the images (kolibrios-nectar-en.zip,
+# kolibrios-nectar-ru.zip) - zips only -, under the same names from release to
+# release, so the latest is always at
 # https://github.com/<owner>/<repo>/releases/latest/download/<file>.zip.
 name: build
 
@@ -27,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Tools
-        run: sudo apt-get update && sudo apt-get install -y fasm zip
+        run: sudo apt-get update && sudo apt-get install -y fasm zip unzip mtools libarchive-tools
       - name: plainpy
         env:
           GH_TOKEN: ${{ secrets.PLAINPY_TOKEN || github.token }}
@@ -64,9 +67,9 @@ jobs:
             LLVM=/usr/lib/llvm-15/bin make -C "$RUNNER_TEMP/plainpy-src" kolibri-tls
             echo "MBEDTLS=$RUNNER_TEMP/plainpy-src/build/kolibri/mbedtls.obj" >> "$GITHUB_ENV"
           fi
-      - name: The programs for KolibriOS (a zip of each, all of them in one)
+      - name: The programs for KolibriOS (a zip of each, all of them in one) and the disk images
         # (kstore gets its registry from this repository's website)
-        run: make dist KSTORE_REGISTRY="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/kstore.json"
+        run: make image KSTORE_REGISTRY="https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/kstore.json"
       - uses: actions/upload-artifact@v4
         with:
           name: kolibrios-apps

@@ -7,14 +7,18 @@
 #   R url              get the registry         R text                    the registry's JSON
 #                                               r why                     it could not be got
 #                                               N                         waiting for the network
-#   I name<tab>url<tab>strip<tab>folder<tab>keep
+#   I name<tab>url<tab>strip<tab>folder<tab>keep<tab>binary<tab>date
 #                      install: the archive     P name<tab>d<tab>n<tab>m  downloading: n bytes of m (0: not known)
 #                      at url unpacked into     P name<tab>u<tab>n<tab>m  unpacking: n files of m
-#                      folder (keep: names      D name                    installed
-#                      separated by commas)     F name<tab>why            not installed: why
+#                      folder (keep: names      P name<tab>u<tab>s<tab>0  unpacking (by /sys/unz), s seconds so far
+#                      separated by commas)     D name                    installed
+#                                               F name<tab>why            not installed: why
 #
 # A program is downloaded whole before anything is written: a failed
-# download leaves the one there as it was. Nothing is asked of the network
+# download leaves the one there as it was. A zip is unpacked by lib/unzip;
+# a 7z by the system's unpacker (lib/unzip's extract_7z) - its files need
+# not carry times, so its binary is stamped with the registry's date and the
+# date says which build is there all the same. Nothing is asked of the network
 # before a network card has an address (kstore started at boot: DHCP takes
 # a while, and a connection asked for before it hangs on KolibriOS).
 import sys
@@ -23,8 +27,9 @@ import kolibri as k
 from typing import Callable
 from https import network_up
 from worker import Boss
-from unzip import Disk, extract
+from unzip import Disk, extract, extract_7z, is_7z
 from .net import Net, NetError
+from .registry import stamp
 
 AREA = 16384               # the worker's IPC area: requests are short
 NET_WAIT = 120             # seconds the network is waited for
@@ -32,23 +37,27 @@ NET_WAIT = 120             # seconds the network is waited for
 class Install:
     """An install request, read."""
 
-    def __init__(self, name: str, url: str, strip: int, folder: str, keep: list[str]):
+    def __init__(self, name: str, url: str, strip: int, folder: str, keep: list[str],
+                 binary: str = "", date: str = ""):
         self.name = name
         self.url = url
         self.strip = strip
         self.folder = folder
         self.keep = keep
+        self.binary = binary                 # its program in the folder
+        self.date = date                     # the registry's date of it
 
 def registry_request(url: str) -> str:
     return "R " + url
 
 def install_request(job: Install) -> str:
-    return "I " + "\t".join([job.name, job.url, str(job.strip), job.folder, ",".join(job.keep)])
+    return "I " + "\t".join([job.name, job.url, str(job.strip), job.folder, ",".join(job.keep), job.binary,
+                             job.date])
 
 def parse_install(text: str) -> Install:
     """An install request (None: not one)."""
     f = text[2:].split("\t")
-    if len(f) != 5:
+    if len(f) != 7:
         return None
     try:
         strip = int(f[2])
@@ -58,7 +67,7 @@ def parse_install(text: str) -> Install:
     for n in f[4].split(","):
         if n != "":
             keep.append(n)
-    return Install(f[0], f[1], strip, f[3], keep)
+    return Install(f[0], f[1], strip, f[3], keep, f[5], f[6])
 
 def one_line(s: str) -> str:
     return s.replace("\t", " ").replace("\n", " ")
@@ -107,9 +116,16 @@ def install(job: Install, net: Net, disk: Disk, say: Callable[[str], bool]) -> b
         nonlocal gone
         if not gone and not say("P " + name + "\tu\t" + str(n) + "\t" + str(total)):
             gone = True
+    def waiting(s: int) -> None:
+        unpacked(s, 0)
     try:
         data = net.download(job.url, came)
-        extract(data, job.folder, job.strip, job.keep, disk, unpacked)
+        if is_7z(data):
+            if job.strip != 0:
+                raise ValueError("a 7z archive is unpacked whole: strip 0")
+            extract_7z(data, job.folder, job.keep, job.binary, stamp(job.date), disk, waiting)
+        else:
+            extract(data, job.folder, job.strip, job.keep, disk, unpacked)
     except NetError as e:
         return say("F " + name + "\t" + one_line(e.message))
     except zipfile.BadZipFile as e:
