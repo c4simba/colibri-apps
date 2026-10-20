@@ -27,8 +27,8 @@ raw_image en_US "$W/kolibri.raw"
 D=$(partition "$W/kolibri.raw")
 for g in $GAMES; do
     name=${g%%:*}
-    mcopy -s -n -m -i "$D" "::/KOLIBRIOS/GAMES/${g#*:}" "$W/zip/"
-    mv "$W/zip/${g#*:}" "$W/zip/$name"
+    mkdir -p "$W/zip/$name"         # (its files straight into the folder of the zip's name: QUAKE and quake are one name on some disks)
+    mcopy -s -n -m -i "$D" "::/KOLIBRIOS/GAMES/${g#*:}/*" "$W/zip/$name/"
     rm -f "$RELEASE/$name.zip"
     (cd "$W/zip" && zip -q -9 -r -X "../$name.zip" "$name")
     mv "$W/$name.zip" "$RELEASE/"
