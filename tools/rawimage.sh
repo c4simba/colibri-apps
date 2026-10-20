@@ -16,10 +16,12 @@ raw_image() {
         curl -fsSL -o "$seven.part" "https://builds.kolibrios.org/$1/latest-raw.7z"
         mv "$seven.part" "$seven"
     fi
-    out=$(dirname "$2")
-    if command -v bsdtar >/dev/null; then bsdtar -xf "$seven" -C "$out" kolibri.raw
-    else 7z e -o"$out" "$seven" kolibri.raw >/dev/null; fi
-    mv "$out/kolibri.raw" "$2"
+    tmp=$(dirname "$2")/.raw.$$             # (a folder of its own: FILE may be named kolibri.raw too)
+    rm -rf "$tmp"; mkdir -p "$tmp"
+    if command -v bsdtar >/dev/null; then bsdtar -xf "$seven" -C "$tmp" kolibri.raw
+    else 7z e -o"$tmp" "$seven" kolibri.raw >/dev/null; fi
+    mv "$tmp/kolibri.raw" "$2"
+    rmdir "$tmp"
 }
 
 partition() {                     # (the MBR's first partition: its first sector at byte 454)
