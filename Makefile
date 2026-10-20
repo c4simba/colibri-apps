@@ -12,6 +12,8 @@
 #   make image           build/release/kolibrios-nectar-en.zip, -ru.zip: KolibriOS's own disk
 #                        image (builds.kolibrios.org) with Nectar the shell and kstore, the rest
 #                        of /kolibrios taken out - for QEMU (tools/mkimage.sh; IMAGE_LANGS=en_US)
+#   make games           build/release/doom.zip, quake.zip: KolibriOS's DOOM and Quake (its image's
+#                        /kolibrios/games), which kstore installs from the release (tools/mkgames.sh)
 #   make run             KolibriOS in QEMU, build/kolibrios as its /hd0/1 (tools/run-kolibrios.sh)
 #   make kstore-registry build/kstore-registry: the tool that writes kstore's registry,
 #                        site/kstore.json (tools/kstore_registry.py), for this machine
@@ -40,7 +42,7 @@ CACERT_URL = https://curl.se/ca/cacert.pem
 KSTORE_REGISTRY ?= https://c4simba.github.io/colibri-apps/kstore.json
 GEN = $(BUILD)/gen
 
-.PHONY: all test dist image run clean tls kstore-registry FORCE $(APPS)
+.PHONY: all test dist image games run clean tls kstore-registry FORCE $(APPS)
 
 SKIN = $(OUT)/nectar.skn
 
@@ -122,6 +124,10 @@ IMAGE_LANGS ?= en_US ru_RU
 image: dist
 	$(foreach l,$(IMAGE_LANGS),PLAINPY="$(PLAINPY)" sh tools/mkimage.sh $(l) \
 		$(BUILD)/release/kolibrios-nectar-$(firstword $(subst _, ,$(l))).zip $(BUILD)/release && ) true
+
+# KolibriOS's DOOM and Quake, a zip each, for kstore (needs curl, bsdtar or 7z, mtools, zip)
+games:
+	sh tools/mkgames.sh $(BUILD)/release
 
 run: all tls
 	sh tools/run-kolibrios.sh $(OUT)

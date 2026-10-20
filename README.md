@@ -24,7 +24,7 @@ folder of its name with the program, what it needs next to it and
 | [kolibrios-apps.zip](../../releases/latest/download/kolibrios-apps.zip) | all of them in one folder |
 | [nectar.zip](../../releases/latest/download/nectar.zip) | Nectar, the desktop (it takes the place of `@TASKBAR`, `@MENU` and `@ICON`): `nectar`, `notify` (the toasts' windows and what `@notify` hands them over with), `nectar.ini` (its settings) and `nectar.skn` / `nectar.dtp` (its skin for every window) |
 | [maps.zip](../../releases/latest/download/maps.zip) | Maps: a map of the world - OpenStreetMap, the Earth from space, a search of places - over https: `maps`, `mbedtls.obj` (plainpy's TLS) and `cacert.pem` (the certificate authorities) |
-| [kstore.zip](../../releases/latest/download/kstore.zip) | kstore, the installer: the programs of a list on the website - Nectar, Maps, Files, NetSurf, plainpy, kstore itself - installed, updated, started: `kstore`, `mbedtls.obj` and `cacert.pem` |
+| [kstore.zip](../../releases/latest/download/kstore.zip) | kstore, the installer: the programs of a list on the website - Nectar, Maps, Files, NetSurf, DOOM, Quake, plainpy, kstore itself - installed, updated, started: `kstore`, `mbedtls.obj` and `cacert.pem` |
 | [startmenu.zip](../../releases/latest/download/startmenu.zip) | Nectar's launcher alone, for the stock `@TASKBAR` |
 | [files.zip](../../releases/latest/download/files.zip) | a small file browser |
 | [counter.zip](../../releases/latest/download/counter.zip) | the smallest kui program |
@@ -55,8 +55,8 @@ through the BIOS and UEFI - with Nectar for its shell and kstore on the
 desktop, in the menu and pinned to the bar; about 4 MB zipped. The heavier
 programs of the official image (its `kolibrios` folder: games, emulators,
 their libraries - 95 MB) are left out, the system itself (the RAM disk,
-`kolibri.img`) is all there, and kstore installs Maps, Files, NetSurf and
-plainpy onto the same disk, which keeps them:
+`kolibri.img`) is all there, and kstore installs Maps, Files, NetSurf, DOOM,
+Quake and plainpy onto the same disk, which keeps them:
 
 ```sh
 qemu-system-i386 -m 256 -drive file=kolibrios-nectar-en.img,format=raw -nic user,model=e1000 -device AC97
@@ -341,7 +341,11 @@ search a second at most).
 `apps/kstore/kstore.py` installs programs: the ones of a registry - a JSON
 file on the website, [site/kstore.json](site/kstore.json): Nectar, Maps,
 Files, NetSurf (the web browser: its latest build on KolibriOS's server),
-plainpy (the interpreter and the compiler, plainpy's own release)
+DOOM and Quake (KolibriOS's ports and the shareware episodes, as its image
+has them in `/kolibrios/games` - the only place they are: `make games`,
+`tools/mkgames.sh`, takes them out of it into `doom.zip` and `quake.zip` of
+this repository's release), plainpy (the interpreter and the compiler,
+plainpy's own release)
 and kstore itself -, got each time it starts (it keeps no copy). A card a
 program: its icon (the system's `icons32.png`), its name and version, what
 it is, and how it stands - **Install** when it is not there, **Update** (and
@@ -556,6 +560,7 @@ make test               # the tests, compiled for this machine
 make test TARGET=interp # ... in the interpreter
 make dist               # build/release: kolibrios-apps.zip and a zip of each program
 make image              # build/release: kolibrios-nectar-en.zip, -ru.zip - KolibriOS with Nectar and kstore
+make games              # build/release: doom.zip, quake.zip - KolibriOS's DOOM and Quake, for kstore
 make run                # KolibriOS in QEMU, build/kolibrios as /hd0/1 (tools/run-kolibrios.sh)
 make kstore-registry    # build/kstore-registry: the tool that writes site/kstore.json
 ```
@@ -620,7 +625,8 @@ tests/                the tests and their expected outputs
 site/                 the website and kstore.json, kstore's registry (GitHub Pages: .github/workflows/pages.yml)
 tools/                mkfont.py (TrueType fonts into kgfx modules), mkskin.py (Nectar's skin), run-kolibrios.sh (QEMU),
                       kstore_registry.py (kstore's registry), mkimage.sh, mkimage.py, image-readme.txt
-                      (KolibriOS's disk image with Nectar and kstore)
+                      (KolibriOS's disk image with Nectar and kstore), mkgames.sh (its DOOM and Quake),
+                      rawimage.sh (the official image, for both)
 ```
 
 `import kolibri` - the KolibriOS system functions - is plainpy's own

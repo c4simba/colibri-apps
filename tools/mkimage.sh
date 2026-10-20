@@ -16,8 +16,9 @@
 # Taken out: /kolibrios - the disk's kolibrios folder, 95 MB of the heavier
 # programs (games, emulators, a PDF reader, NetSurf - kstore installs it -,
 # their libraries) - but for res/system, by which SEARCHAP finds the folder
-# (it mounts it as /kolibrios), and the loaders for DOS and Windows and the
-# docs. The system itself is the RAM disk, kolibri.img, as on a floppy.
+# (it mounts it as /kolibrios), and lib/libc.dll, the C library of the
+# system's ports (Quake, which kstore installs, needs it) -, and the loaders
+# for DOS and Windows and the docs. The system itself is the RAM disk, kolibri.img, as on a floppy.
 # Put in: nectar/ and kstore/ in the kolibrios folder - so they are
 # /kolibrios/nectar and /kolibrios/kstore whatever disk the system booted
 # from, and kstore installs Maps, NetSurf ... next to them. kolibri.img
@@ -27,15 +28,14 @@
 #
 # Needs: curl, bsdtar or 7z, mtools, unzip, zip and plainpy (PLAINPY=...).
 set -eu
+. tools/rawimage.sh
 LANG_ID=${1:?LANG: en_US or ru_RU}
 OUT=${2:?OUT.zip}
 RELEASE=${3:-build/release}
 PLAINPY=${PLAINPY:-plainpy}
-URL=https://builds.kolibrios.org/$LANG_ID/latest-raw.7z
 SHORT=$(echo "$LANG_ID" | cut -c1-2)
 NAME=kolibrios-nectar-$SHORT
 W=build/image/$LANG_ID
-export MTOOLS_SKIP_CHECK=1
 
 for z in nectar kstore; do
     [ -f "$RELEASE/$z.zip" ] || { echo "mkimage: no $RELEASE/$z.zip (make dist)"; exit 1; }
@@ -43,27 +43,18 @@ done
 rm -rf "$W"
 mkdir -p "$W/sys" "$W/kolibrios" "$W/out" "$W/zip/$NAME"
 
-# the system's image of a hard disk (downloaded once into build/image)
-SEVEN=build/image/latest-raw-$LANG_ID.7z
-if [ ! -f "$SEVEN" ]; then
-    curl -fsSL -o "$SEVEN.part" "$URL"
-    mv "$SEVEN.part" "$SEVEN"
-fi
-if command -v bsdtar >/dev/null; then bsdtar -xf "$SEVEN" -C "$W" kolibri.raw
-else 7z e -o"$W" "$SEVEN" kolibri.raw >/dev/null; fi
+# the system's image of a hard disk, its partition
 IMG=$W/zip/$NAME/$NAME.img
-mv "$W/kolibri.raw" "$IMG"
+raw_image "$LANG_ID" "$IMG"
+D=$(partition "$IMG")
+mdir -i "$D" ::/KOLIBRI.IMG ::/KOLIBRIOS/RES/SYSTEM ::/KOLIBRIOS/LIB/libc.dll >/dev/null
 
-# its partition (the first of the MBR: its first sector at byte 454)
-lba=$(od -An -tu4 -j454 -N4 "$IMG" | tr -d ' ')
-D="$IMG@@$((lba * 512))"
-mdir -i "$D" ::/KOLIBRI.IMG ::/KOLIBRIOS/RES/SYSTEM >/dev/null
-
-# the RAM disk's files, and what /kolibrios is to hold: res/system, Nectar, kstore
+# the RAM disk's files, and what /kolibrios is to hold: res/system, lib/libc.dll, Nectar, kstore
 mcopy -n -m -i "$D" ::/KOLIBRI.IMG "$W/kolibri.img"
 mcopy -s -n -m -i "$W/kolibri.img" '::*' "$W/sys/"
-mkdir -p "$W/kolibrios/RES"
+mkdir -p "$W/kolibrios/RES" "$W/kolibrios/LIB"
 mcopy -s -n -m -i "$D" ::/KOLIBRIOS/RES/SYSTEM "$W/kolibrios/RES/"
+mcopy -n -m -i "$D" ::/KOLIBRIOS/LIB/libc.dll "$W/kolibrios/LIB/"
 for z in nectar kstore; do unzip -q -o "$RELEASE/$z.zip" -d "$W/kolibrios"; done
 rm -f "$W/kolibrios/nectar/INSTALL.txt" "$W/kolibrios/kstore/INSTALL.txt"
 

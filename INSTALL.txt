@@ -25,7 +25,8 @@ https://github.com/c4simba/nectar
               /sys/settings) - and the network up. maps LAT LON [ZOOM]
               opens it there.
   kstore      an installer: the programs of a list on the website
-              (Nectar, Maps, Files, NetSurf, plainpy, kstore) installed, updated
+              (Nectar, Maps, Files, NetSurf, DOOM, Quake, plainpy, kstore)
+              installed, updated
               and started - each into a folder next to kstore's own (kstore
               in /hd0/1/kstore puts Maps into /hd0/1/maps). It needs, as
               maps does, mbedtls.obj and cacert.pem next to it and the
@@ -67,8 +68,8 @@ maps - карта мира через https: OpenStreetMap, снимки Зем�
 /sys/settings), сеть должна быть настроена. Мышь двигает карту, колесо
 меняет масштаб, Tab переключает схему и снимки, набранный текст ищет место.
 
-kstore - установщик программ: Nectar, Maps, Files, NetSurf, plainpy и сам
-kstore из списка на сайте. Кнопки "Установить", "Обновить" (если в списке
+kstore - установщик программ: Nectar, Maps, Files, NetSurf, DOOM, Quake,
+plainpy и сам kstore из списка на сайте. Кнопки "Установить", "Обновить" (если в списке
 версия новее установленной) и "Запустить". Программы ставятся рядом с
 папкой kstore: kstore в /hd0/1/kstore ставит Maps в /hd0/1/maps. Рядом с
 ним держите mbedtls.obj и cacert.pem (они в kstore.zip), сеть должна
